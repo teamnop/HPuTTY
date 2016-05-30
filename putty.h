@@ -603,8 +603,8 @@ int char_width(Context ctx, int uc);
 #ifdef OPTIMISE_SCROLL
 void do_scroll(Context, int, int, int);
 #endif
-void set_title(void *frontend, char *);
-void set_icon(void *frontend, char *);
+void set_title(void *frontend, wchar_t *);
+void set_icon(void *frontend, wchar_t *);
 void set_sbar(void *frontend, int, int, int);
 Context get_ctx(void *frontend);
 void free_ctx(Context);
@@ -661,7 +661,7 @@ void set_zoomed(void *frontend, int zoomed);
 int is_iconic(void *frontend);
 void get_window_pos(void *frontend, int *x, int *y);
 void get_window_pixels(void *frontend, int *x, int *y);
-char *get_window_title(void *frontend, int icon);
+wchar_t *get_window_title(void *frontend, int icon);
 /* Hint from backend to frontend about time-consuming operations.
  * Initial state is assumed to be BUSY_NOT. */
 enum {
@@ -1219,10 +1219,10 @@ void get_unitab(int codepage, wchar_t * unitab, int ftype);
 /*
  * Exports from wcwidth.c
  */
-int mk_wcwidth(unsigned int ucs);
-int mk_wcswidth(const unsigned int *pwcs, size_t n);
-int mk_wcwidth_cjk(unsigned int ucs);
-int mk_wcswidth_cjk(const unsigned int *pwcs, size_t n);
+int mk_wcwidth(wchar_t ucs);
+int mk_wcswidth(const wchar_t *pwcs, size_t n);
+int mk_wcwidth_cjk(wchar_t ucs);
+int mk_wcswidth_cjk(const wchar_t *pwcs, size_t n);
 
 /*
  * Exports from mscrypto.c
