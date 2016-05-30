@@ -49,6 +49,10 @@ wchar_t *dup_mb_to_wc_c(int codepage, int flags, const char *string, int len);
 wchar_t *dup_mb_to_wc(int codepage, int flags, const char *string);
 
 int toint(unsigned);
+wchar_t *dupwstr(const wchar_t *s);
+wchar_t *dupwcat(const wchar_t *s1, ...);
+wchar_t *dupwprintf(const wchar_t *fmt, ...);
+wchar_t *dupvwprintf(const wchar_t *fmt, va_list ap);
 
 char *fgetline(FILE *fp);
 int strstartswith(const char *s, const char *t);
