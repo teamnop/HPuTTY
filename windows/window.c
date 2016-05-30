@@ -28,6 +28,7 @@
 #endif
 
 #include <imm.h>
+#include <shellapi.h>
 #include <commctrl.h>
 #include <richedit.h>
 #include <mmsystem.h>
@@ -63,6 +64,7 @@
 
 #define IDM_SAVED_MIN 0x1000
 #define IDM_SAVED_MAX 0x5000
+#define IDM_UNICODE	  0x2000
 #define MENU_SAVED_STEP 16
 
 #define IDM_URL_MIN 0x5001
@@ -214,6 +216,7 @@ struct agent_callback {
 #define FONT_OEMUND 	0x22
 #define FONT_OEMBOLDUND 0x23
 
+#define FONT_UNICODE	0x2F
 #define FONT_MAXNO 	0x40
 #define FONT_SHIFT	5
 static HFONT fonts[FONT_MAXNO];
@@ -247,7 +250,7 @@ static int wheel_accumulator = 0;
 
 static int busy_status = BUSY_NOT;
 
-static char *window_name, *icon_name;
+static wchar_t *window_name, *icon_name;
 
 static int compose_state = 0;
 
@@ -321,8 +324,9 @@ char *get_ttymode(void *frontend, const char *mode)
 static void start_backend(void)
 {
     const char *error;
-    char msg[1024] = {0}, *title = NULL;
-    char *realhost = NULL;
+    char msg[1024], *title;
+	wchar_t *wtitle;
+    char *realhost;
     int i;
 
     /*
@@ -331,11 +335,11 @@ static void start_backend(void)
      */
     back = backend_from_proto(conf_get_int(conf, CONF_protocol));
     if (back == NULL) {
-	char *str = dupprintf("%s Internal Error", appname);
-	MessageBox(NULL, "Unsupported protocol number found",
-		   str, MB_OK | MB_ICONEXCLAMATION);
-	sfree(str);
-	cleanup_exit(1);
+	    char *str = dupprintf("%s Internal Error", appname);
+	    MessageBox(NULL, "Unsupported protocol number found",
+		       str, MB_OK | MB_ICONEXCLAMATION);
+	    sfree(str);
+	    cleanup_exit(1);
     }
 
     error = back->init(NULL, &backhandle, conf,
@@ -346,23 +350,25 @@ static void start_backend(void)
 		       conf_get_int(conf, CONF_tcp_keepalives));
     back->provide_logctx(backhandle, logctx);
     if (error) {
-	char *str = dupprintf("%s Error", appname);
-	sprintf(msg, "Unable to open connection to\n"
-		"%.800s\n" "%s", conf_dest(conf), error);
-	MessageBox(NULL, msg, str, MB_ICONERROR | MB_OK);
-	sfree(str);
-	exit(0);
+	    char *str = dupprintf("%s Error", appname);
+	    sprintf(msg, "Unable to open connection to\n%.800s\n%s", conf_dest(conf), error);
+	    MessageBox(NULL, msg, str, MB_ICONERROR | MB_OK);
+	    sfree(str);
+	    exit(0);
     }
     window_name = icon_name = NULL;
-    title = conf_get_str(conf, CONF_wintitle);
+	title = conf_get_str(conf, CONF_wintitle);
     if (!*title) {
-	sprintf(msg, "%s - %s", realhost, appname);
-	title = msg;
+	    sprintf(msg, "%s - %s", realhost, appname);
+        title = msg;
     }
     sfree(realhost);
-    set_title(NULL, title);
-    set_icon(NULL, title);
-
+    
+    wtitle = short_mb_to_wc(CP_ACP, 0, title, strlen(title));
+    set_title(NULL, wtitle);
+    set_icon(NULL, wtitle);
+    sfree(wtitle);
+    
     /*
      * Connect the terminal to the backend for resize purposes.
      */
@@ -392,12 +398,14 @@ static void start_backend(void)
 static void close_session(void *ignored_context)
 {
     char morestuff[100];
+    wchar_t morestuffW[200] = {0};
     int i;
 
     session_closed = TRUE;
     sprintf(morestuff, "%.70s (inactive)", appname);
-    set_icon(NULL, morestuff);
-    set_title(NULL, morestuff);
+	MultiByteToWideChar(CP_ACP, 0, morestuff, strlen(morestuff), morestuffW, 200);
+    set_icon(NULL, morestuffW);
+    set_title(NULL, morestuffW);
 
     if (ldisc) {
 	ldisc_free(ldisc);
@@ -439,6 +447,7 @@ int putty_main(HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
     MSG msg;
     HRESULT hr;
     int guess_width, guess_height;
+	HACCEL hAccel;
 
     hinst = inst;
     hwnd = NULL;
@@ -994,6 +1003,8 @@ int putty_main(HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 	    AppendMenu(m, MF_POPUP | MF_ENABLED, (UINT) savedsess_menu,
 		       "Sa&ved Sessions");
 	    AppendMenu(m, MF_ENABLED, IDM_RECONF, "Chan&ge Settings...");
+	    AppendMenu(m, MF_SEPARATOR, 0, 0);
+		AppendMenu(m, MF_ENABLED | (strncmp(conf_get_str(conf, CONF_line_codepage), "UTF-8", 6) ? 0 : MF_CHECKED), IDM_UNICODE, "&Unicode Mode");
 	    AppendMenu(m, MF_SEPARATOR, 0, 0);
 	    AppendMenu(m, MF_ENABLED, IDM_COPYALL, "C&opy All to Clipboard");
 	    AppendMenu(m, MF_ENABLED, IDM_CLRSB, "C&lear Scrollback");
@@ -1814,6 +1825,17 @@ static void init_fonts(int pick_width, int pick_height)
         f(FONT_BOLD, font->charset, fw_bold, FALSE);
     }
 
+	if (conf_get_int(conf, CONF_use_font_unicode)) {
+		FontSpec *font_unicode = conf_get_fontspec(conf, CONF_font_unicode);
+		fonts[FONT_UNICODE] = CreateFont(font_height, font_width, 0, 0, fw_dontcare, FALSE, FALSE, FALSE, \
+			font_unicode->charset, OUT_DEFAULT_PRECIS, \
+			CLIP_DEFAULT_PRECIS, FONT_QUALITY(quality), \
+			FIXED_PITCH | FF_DONTCARE, font_unicode->name);
+	}
+	else
+		fonts[FONT_UNICODE] = NULL;
+
+
     SelectObject(hdc, fonts[FONT_NORMAL]);
     GetTextMetrics(hdc, &tm);
 
@@ -2279,6 +2301,19 @@ static void set_input_locale(HKL kl)
 		  lbuf, sizeof(lbuf));
 
     kbd_codepage = atoi(lbuf);
+
+#ifdef ONTHESPOT
+    /* Korean IME doesn't need to show the external IME composing
+     * window and it can make users less intuitive to see what they
+     * are typing. */
+    if (kbd_codepage == 949 /* Korean */) {
+	term->onthespot = 1;
+	term->onthespot_buf[0] = 0;
+        term->onthespot_buf[1] = 0;
+    }
+    else
+	term->onthespot = 0;
+#endif
 }
 
 static void click(Mouse_Button b, int x, int y, int shift, int ctrl, int alt)
@@ -2576,7 +2611,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
 		 * the window title field in the config box doesn't
 		 * reset the title to its startup state.
 		 */
-		conf_set_str(conf, CONF_wintitle, window_name);
+		{
+			char *window_name_A;
+			window_name_A = short_wc_to_mb(CP_ACP, 0, window_name, wcslen(window_name), NULL, NULL);
+			conf_set_str(conf, CONF_wintitle, window_name_A);
+			sfree(window_name_A);
+		}
 
 		prev_conf = conf_copy(conf);
 
@@ -2758,11 +2798,16 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
 		    init_lvl = 2;
 		}
 
-		set_title(NULL, conf_get_str(conf, CONF_wintitle));
-		if (IsIconic(hwnd)) {
-		    SetWindowText(hwnd,
-				  conf_get_int(conf, CONF_win_name_always) ?
-				  window_name : icon_name);
+		{
+			char *wintitle = conf_get_str(conf, CONF_wintitle);
+			wchar_t *wintitleW = short_mb_to_wc(CP_ACP, 0, wintitle, strlen(wintitle));
+			set_title(NULL, wintitleW);
+			if (IsIconic(hwnd)) {
+				SetWindowTextW(hwnd,
+					conf_get_int(conf, CONF_win_name_always) ?
+					window_name : icon_name);
+			}
+			sfree(wintitleW);
 		}
 
 		{
@@ -2770,23 +2815,31 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
 		    FontSpec *prev_font = conf_get_fontspec(prev_conf,
                                                              CONF_font);
 
-		    if (!strcmp(font->name, prev_font->name) ||
-			!strcmp(conf_get_str(conf, CONF_line_codepage),
-				conf_get_str(prev_conf, CONF_line_codepage)) ||
-			font->isbold != prev_font->isbold ||
-			font->height != prev_font->height ||
-			font->charset != prev_font->charset ||
-			conf_get_int(conf, CONF_font_quality) !=
-			conf_get_int(prev_conf, CONF_font_quality) ||
-			conf_get_int(conf, CONF_vtmode) !=
-			conf_get_int(prev_conf, CONF_vtmode) ||
-			conf_get_int(conf, CONF_bold_style) !=
-			conf_get_int(prev_conf, CONF_bold_style) ||
-			resize_action == RESIZE_DISABLED ||
-			resize_action == RESIZE_EITHER ||
-			resize_action != conf_get_int(prev_conf,
-						      CONF_resize_action))
-			init_lvl = 2;
+            FontSpec *font_unicode = conf_get_fontspec(conf, CONF_font_unicode);
+			FontSpec *prev_font_unicode = conf_get_fontspec(prev_conf,
+				CONF_font_unicode);
+
+
+			if (!strcmp(font->name, prev_font->name) ||
+				!strcmp(font_unicode->name, prev_font_unicode->name) ||
+				!strcmp(conf_get_str(conf, CONF_line_codepage),
+					conf_get_str(prev_conf, CONF_line_codepage)) ||
+				font->isbold != prev_font->isbold ||
+				font_unicode->isbold != prev_font_unicode->isbold ||
+				font->height != prev_font->height ||
+				font->charset != prev_font->charset ||
+				font_unicode->charset != prev_font_unicode->charset ||
+				conf_get_int(conf, CONF_font_quality) !=
+				conf_get_int(prev_conf, CONF_font_quality) ||
+				conf_get_int(conf, CONF_vtmode) !=
+				conf_get_int(prev_conf, CONF_vtmode) ||
+				conf_get_int(conf, CONF_bold_style) !=
+				conf_get_int(prev_conf, CONF_bold_style) ||
+				resize_action == RESIZE_DISABLED ||
+				resize_action == RESIZE_EITHER ||
+				resize_action != conf_get_int(prev_conf,
+					CONF_resize_action))
+				init_lvl = 2;
 		}
 
 		InvalidateRect(hwnd, NULL, TRUE);
@@ -2811,6 +2864,15 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
 	    break;
 	  case IDM_ABOUT:
 	    showabout(hwnd);
+	    break;
+	  case IDM_UNICODE:
+	  {
+		  char *cur_line_codepage = conf_get_str(conf, CONF_line_codepage);
+		  conf_set_str(conf, CONF_line_codepage, strncmp(cur_line_codepage, "UTF-8", 6) ? "UTF-8" : "CP949");
+		  reset_window(2);
+		  cur_line_codepage = conf_get_str(conf, CONF_line_codepage);
+		  CheckMenuItem(GetSystemMenu(hwnd, FALSE), IDM_UNICODE, strcmp(cur_line_codepage, "UTF-8") ? MF_UNCHECKED : MF_CHECKED);
+	  }
 	    break;
 	  case IDM_HELP:
 	    launch_help(hwnd, NULL);
@@ -3217,6 +3279,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
 	DestroyCaret();
 	caret_x = caret_y = -1;	       /* ensure caret is replaced next time */
 	term_update(term);
+#ifdef ONTHESPOT
+	term->onthespot_buf[0] = 0;
+#endif
 	break;
       case WM_ENTERSIZEMOVE:
 #ifdef RDB_DEBUG_PATCH
@@ -3362,7 +3427,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
 			control_pressed=keys[VK_CONTROL]&0x80;
 		}
 
-	    SetWindowText(hwnd,
+	    SetWindowTextW(hwnd,
 			  conf_get_int(conf, CONF_win_name_always) ?
 			  window_name : icon_name);
 
@@ -3376,9 +3441,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
 	}
 
 	if (wParam == SIZE_RESTORED || wParam == SIZE_MAXIMIZED)
-	    SetWindowText(hwnd, window_name);
+	    SetWindowTextW(hwnd, window_name);
         if (wParam == SIZE_RESTORED) {
-            processed_resize = FALSE;
+			processed_resize = FALSE;
             clear_full_screen();
             if (processed_resize) {
                 /*
@@ -3624,25 +3689,78 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
       case WM_IME_STARTCOMPOSITION:
 	{
 	    HIMC hImc = ImmGetContext(hwnd);
-	    ImmSetCompositionFont(hImc, &lfont);
+            LOGFONT lf_compose;
+#ifdef ONTHESPOT
+	    if (term->onthespot) {
+		COMPOSITIONFORM cf;
+		RECT rectWorkArea;
+
+		SystemParametersInfo(SPI_GETWORKAREA, 0,
+				     (void*)&rectWorkArea, 0);
+		cf.dwStyle = CFS_POINT;
+		cf.ptCurrentPos.x = 0; // drive out of screen
+		cf.ptCurrentPos.y = rectWorkArea.bottom+50;
+                GetObject(fonts[FONT_UNICODE], sizeof(LOGFONT), &lf_compose);
+                ImmSetCompositionFont(hImc, &lf_compose);
+		ImmSetCompositionWindow(hImc, &cf);
+		ImmReleaseContext(hwnd, hImc);
+		term->onthespot_buf[0] = 0;
+		return 0;
+	    }
+#endif
+            ImmSetCompositionFont(hImc, &lfont);
 	    ImmReleaseContext(hwnd, hImc);
 	}
 	break;
+#ifdef ONTHESPOT
+      case WM_IME_ENDCOMPOSITION:
+	term->onthespot_buf[0] = 0;
+	break;
+#endif
       case WM_IME_COMPOSITION:
 	{
-	    HIMC hIMC;
+	    HIMC hIMC = ImmGetContext(hwnd);
 	    int n;
 	    char *buff;
+            wchar_t *wbuff;
 
 	    if(osVersion.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS || 
 	        osVersion.dwPlatformId == VER_PLATFORM_WIN32s) break; /* no Unicode */
 
-	    if ((lParam & GCS_RESULTSTR) == 0) /* Composition unfinished. */
+            if (lParam & GCS_COMPSTR) { /* Composition unfinished. */
+#ifdef ONTHESPOT
+                // wParam only has DBCS characters, but we want unicode characters.
+                // So we call the unicode version.
+                n = ImmGetCompositionStringW(hIMC, GCS_COMPSTR, NULL, 0);
+		if (term->onthespot) {
+		    RECT invrect;
+                    HDC hdc;
+                    if (n > 0) {
+                        buff = snewn(n + 2, char);
+                        memset(buff, 0, n + 2);
+                        ImmGetCompositionStringW(hIMC, GCS_COMPSTR, buff, n);
+                        wbuff = (wchar_t*) buff;
+                        term->onthespot_buf[0] = wbuff[0];
+                        free(buff);
+                    }
+                    else
+                        term->onthespot_buf[0] = 0;
+
+		    invrect.left = caret_x;
+		    invrect.top = caret_y;
+		    invrect.right = caret_x + font_width * 2;
+		    invrect.bottom = caret_y + font_height;
+		    InvalidateRect(hwnd, &invrect, TRUE);
+		}
+#endif
 		break; /* fall back to DefWindowProc */
+            }
+#ifdef ONTHESPOT
+	    else
+		term->onthespot_buf[0] = 0;
+#endif
 
-	    hIMC = ImmGetContext(hwnd);
-	    n = ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, NULL, 0);
-
+            n = ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, NULL, 0);
 	    if (n > 0) {
 		int i;
 		buff = snewn(n, char);
@@ -4290,6 +4408,12 @@ void do_text_internal(Context ctx, int x, int y, wchar_t *text, int len,
             for (i = 0; i < len; i++)
                 wbuf[i] = text[i];
 
+			/* IPUTTY PATCH: non-latin font replacing... */
+			if (conf_get_int(conf, CONF_use_font_unicode)) {
+				SelectObject(hdc, fonts[FONT_UNICODE]);
+				text_adjust = conf_get_int(conf, CONF_font_unicode_adj);
+			}
+			
             /* print Glyphs as they are, without Windows' Shaping*/
             general_textout(hdc, x + xoffset,
                             y - font_height * (lattr==LATTR_BOT) + text_adjust,
@@ -4797,7 +4921,76 @@ static int TranslateKey(UINT message, WPARAM wParam, LPARAM lParam,
 	    term->app_keypad_keys ^= 1;
 	    return 0;
 	}
-
+	// TODO: transparency mode를 찾지 못하여 임시로 비활성화 해둠
+	/* HACK: iPuTTY (by bluehope)
+	 * alt+[,] to switch transparency between (50,cfg.transparency,255)
+	 * alt+{,} to change cfg.transparency in 5 step
+	 */
+	/*if (left_alt && wParam == VK_OEM_4){
+	    if (0 == shift_state){
+		int transp_mode = conf_get_int(conf, CONF_transparency_mode);
+		transp_mode --;
+		transp_mode = max(0, transp_mode);
+		switch (transp_mode)
+		{
+		  case 0:
+		    MakeWindowTransparent(hwnd, 50);
+		    break;
+		  case 1:
+		    MakeWindowTransparent(hwnd, conf_get_int(conf, CONF_transparency));
+		    break;
+		  case 2:
+		    MakeWindowTransparent(hwnd, 255);
+		    break;
+		  default:
+		    MakeWindowTransparent(hwnd, 255);
+		    break;
+		}
+		conf_set_int(conf, CONF_transparency_mode, transp_mode);
+	    }
+	    else if (1 == shift_state)
+	    {
+		int transp = conf_get_int(conf, CONF_transparency);
+		conf_set_int(conf, CONF_transparency_mode, 1);
+		transp -= 5;
+		transp = max(50, transp);
+		MakeWindowTransparent(hwnd, transp);
+		conf_set_int(conf, CONF_transparency, transp);
+	    }
+	    return -1;
+	}
+	if (left_alt && wParam == VK_OEM_6){
+	    if(0==shift_state){
+		int transp_mode = conf_get_int(conf, CONF_transparency_mode);
+		transp_mode ++;
+		transp_mode = min(2, transp_mode);
+		switch (transp_mode)
+		{
+		  case 0:
+		    MakeWindowTransparent(hwnd, 50);
+		    break;
+		  case 1:
+		    MakeWindowTransparent(hwnd, conf_get_int(conf, CONF_transparency));
+		    break;
+		  case 2:
+		    MakeWindowTransparent(hwnd, 255);
+		    break;
+		  default:
+		    MakeWindowTransparent(hwnd, 255);
+		    break;
+		}
+		conf_set_int(conf, CONF_transparency_mode, transp_mode);
+	    } else if (1 == shift_state)
+	    {
+		int transp = conf_get_int(conf, CONF_transparency);
+		conf_set_int(conf, CONF_transparency_mode, 1);
+		transp += 5;
+		transp = min(255, transp);
+		MakeWindowTransparent(hwnd, transp);
+		conf_set_int(conf, CONF_transparency, transp);
+	    }
+	    return -1;
+	}*/
 	/* Nethack keypad */
 	if (nethack_keypad && !left_alt) {
 	    switch (wParam) {
@@ -5419,23 +5612,24 @@ static int TranslateKey(UINT message, WPARAM wParam, LPARAM lParam,
 
 void set_title(void *frontend, char *title)
 {
-    sfree(window_name);
-    window_name = snewn(1 + strlen(title), char);
-    strcpy(window_name, title);
-    if (conf_get_int(conf, CONF_win_name_always) || !IsIconic(hwnd))
-	SetWindowText(hwnd, title);
+	int len = wcslen(title);
+	sfree(window_name);
+    window_name = snewn(1 + len, wchar_t);
+	wcscpy(window_name, title);
+
+	if (conf_get_int(conf, CONF_win_name_always) || !IsIconic(hwnd))
+		SetWindowTextW(hwnd, title);
 
     taskbar_addicon(conf_get_int(conf, CONF_win_name_always) ? window_name : icon_name, puttyTrayVisible);
 }
 
-void set_icon(void *frontend, char *title)
+void set_icon(void *frontend, wchar_t *title)
 {
     sfree(icon_name);
-    icon_name = snewn(1 + strlen(title), char);
-    strcpy(icon_name, title);
+    icon_name = snewn(1 + wcslen(title), wchar_t);
+    wcscpy(icon_name, title);
     if (!conf_get_int(conf, CONF_win_name_always) && IsIconic(hwnd))
-	SetWindowText(hwnd, title);
-}
+	SetWindowTextW(hwnd, title);}
 
 void set_sbar(void *frontend, int total, int start, int page)
 {
@@ -6374,7 +6568,7 @@ void get_window_pixels(void *frontend, int *x, int *y)
 /*
  * Return the window or icon title.
  */
-char *get_window_title(void *frontend, int icon)
+wchar_t *get_window_title(void *frontend, int icon)
 {
     return icon ? icon_name : window_name;
 }

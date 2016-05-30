@@ -1290,6 +1290,17 @@ static void power_on(Terminal *term, int clear)
     term->curs.x = 0;
     term_schedule_tblink(term);
     term_schedule_cblink(term);
+#ifdef ONTHESPOT
+    {
+	int cp = decode_codepage(conf_get_str(term->conf, CONF_line_codepage));
+	if (cp == CP_UTF8 || cp == 949)
+	    term->onthespot = 1;
+	else
+	    term->onthespot = 0;
+	term->onthespot_buf[0] = 0;
+	term->onthespot_buf[1] = 0;
+    }
+#endif
 }
 
 /*
@@ -2675,21 +2686,26 @@ static void do_osc(Terminal *term)
 	    term->wordness[(unsigned char)
 		term->osc_string[term->osc_strlen]] = term->esc_args[0];
     } else {
+	wchar_t *osc_wstring;
 	term->osc_string[term->osc_strlen] = '\0';
+
+	osc_wstring = short_mb_to_wc(decode_codepage(conf_get_str(term->conf, CONF_line_codepage)), 0, term->osc_string, term->osc_strlen);
+		
 	switch (term->esc_args[0]) {
 	  case 0:
 	  case 1:
-	    if (!term->no_remote_wintitle)
-		set_icon(term->frontend, term->osc_string);
-	    if (term->esc_args[0] == 1)
+		if (!term->no_remote_wintitle)
+			set_icon(term->frontend, osc_wstring);
+		if (term->esc_args[0] == 1)
 		break;
-	    /* fall through: parameter 0 means set both */
+		/* fall through: parameter 0 means set both */
 	  case 2:
 	  case 21:
-	    if (!term->no_remote_wintitle)
-		set_title(term->frontend, term->osc_string);
-	    break;
+		if (!term->no_remote_wintitle)
+			set_title(term->frontend, osc_wstring);
+		break;
 	}
+	sfree(osc_wstring);
     }
 }
 
@@ -4076,27 +4092,37 @@ static void term_out(Terminal *term)
 			      case 20:
 				if (term->ldisc &&
 				    term->remote_qtitle_action != TITLE_NONE) {
-				    if(term->remote_qtitle_action == TITLE_REAL)
-					p = get_window_title(term->frontend, TRUE);
-				    else
-					p = EMPTY_WINDOW_TITLE;
+                    p = NULL;
+                    if(term->remote_qtitle_action == TITLE_REAL) {
+                        wchar_t *wp = get_window_title(term->frontend, TRUE);
+                        p = snewn(101, char);
+                        memset(p, 0, sizeof(char) * 101);
+                        wc_to_mb(decode_codepage(conf_get_str(term->conf, CONF_line_codepage)), 0, wp, wcslen(wp), p, 100, NULL, NULL, NULL);
+                    } else
+					    p = EMPTY_WINDOW_TITLE;
 				    len = strlen(p);
 				    ldisc_send(term->ldisc, "\033]L", 3, 0);
 				    ldisc_send(term->ldisc, p, len, 0);
 				    ldisc_send(term->ldisc, "\033\\", 2, 0);
+                    sfree(p);
 				}
 				break;
 			      case 21:
 				if (term->ldisc &&
 				    term->remote_qtitle_action != TITLE_NONE) {
-				    if(term->remote_qtitle_action == TITLE_REAL)
-					p = get_window_title(term->frontend, FALSE);
-				    else
-					p = EMPTY_WINDOW_TITLE;
+                    p = NULL;
+				    if(term->remote_qtitle_action == TITLE_REAL) {
+                        wchar_t *wp = get_window_title(term->frontend, FALSE);
+                        p = snewn(101, char);
+                        memset(p, 0, sizeof(char) * 101);
+                        wc_to_mb(decode_codepage(conf_get_str(term->conf, CONF_line_codepage)), 0, wp, wcslen(wp), p, 100, NULL, NULL, NULL);
+                    } else
+					    p = EMPTY_WINDOW_TITLE;
 				    len = strlen(p);
 				    ldisc_send(term->ldisc, "\033]l", 3, 0);
 				    ldisc_send(term->ldisc, p, len, 0);
 				    ldisc_send(term->ldisc, "\033\\", 2, 0);
+                    sfree(p);
 				}
 				break;
 			    }
@@ -4421,8 +4447,13 @@ static void term_out(Terminal *term)
 		 */
 		if (c == '\012' || c == '\015') {
 		    term->termstate = TOPLEVEL;
-		} else if (c == 0234 || c == '\007') {
-		    /*
+		} else if (/*c == 0234 ||*/ c == '\007') {
+			/* HACK: iPuTTY
+			* 0234 (0x9c) may interfere with UTF-8 encoded Korean
+			* characters. We drop support for 0x9c (ST) control
+			* character in favor of Korean support and since
+			* most xterm docs use 0x07. */
+			/*
 		     * These characters terminate the string; ST and BEL
 		     * terminate the sequence and trigger instant
 		     * processing of it, whereas ESC goes back to SEEN_ESC
@@ -4936,6 +4967,7 @@ static termchar *term_bidi_line(Terminal *term, struct termline *ldata,
  */
 static void do_paint(Terminal *term, Context ctx, int may_optimise)
 {
+    static FILE *fp = NULL;
     int i, j, our_curs_y, our_curs_x;
     int rv, cursor;
     pos scrpos;
@@ -5089,6 +5121,7 @@ static void do_paint(Terminal *term, Context ctx, int may_optimise)
 	int last_run_dirty = 0;
 	int laststart, dirtyrect;
 	int *backward;
+        int cursor_wide = 0;
 
 	scrpos.y = i + term->disptop;
 	ldata = lineptr(scrpos.y);
@@ -5108,6 +5141,9 @@ static void do_paint(Terminal *term, Context ctx, int may_optimise)
 	 */
 	for (j = 0; j < term->cols; j++) {
 	    unsigned long tattr, tchar;
+#ifdef ONTHESPOT
+	    int j_offset = 0;
+#endif
 	    termchar *d = lchars + j;
 	    scrpos.x = backward ? backward[j] : j;
 
@@ -5221,11 +5257,36 @@ static void do_paint(Terminal *term, Context ctx, int may_optimise)
 		term->curstype = cursor;
 		term->dispcursx = j;
 		term->dispcursy = i;
+                if (/*in_dbcs(term) &&*/ is_dbcs_leadbyte((term)->ucsdata->line_codepage, (unsigned char)tchar)) {
+		    cursor_wide = 1;
+		}
+#ifdef ONTHESPOT
+		if (term->onthespot && term->onthespot_buf[0]) {
+                    tchar = tchar & 0xffff0000 | term->onthespot_buf[0];
+		    tattr |= ATTR_INVALID;
+                }
+	    }
+	    /* Onthespot IMEs always process DBCS characters and cursors
+	     * are always wide while composing */
+	    else if (i == our_curs_y && j == our_curs_x + 1 &&
+			term->onthespot && term->onthespot_buf[0]) {
+	    	tattr |= cursor | ATTR_INVALID;
+		term->curstype = cursor;
+		j_offset = -1;
+#endif
+	    }
+	    else if (cursor_wide && i == our_curs_y && j == our_curs_x+1) {
+		tattr |= cursor;
+		term->curstype = cursor;
+		cursor_wide = 0;
 	    }
 
 	    /* FULL-TERMCHAR */
 	    newline[j].attr = tattr;
 	    newline[j].chr = tchar;
+#ifdef ONTHESPOT
+	    newline[j].offset = j_offset;
+#endif
 	    /* Combining characters are still read from lchars */
 	    newline[j].cc_next = 0;
 	}
@@ -5284,6 +5345,9 @@ static void do_paint(Terminal *term, Context ctx, int may_optimise)
 	    tattr = newline[j].attr;
 	    tchar = newline[j].chr;
 
+            if (cursor_wide && i == our_curs_y && j == our_curs_x+1)
+                tattr = newline[j].attr = attr;
+
 	    if ((term->disptext[i]->chars[j].attr ^ tattr) & ATTR_WIDE)
 		dirty_line = TRUE;
 
@@ -5301,6 +5365,9 @@ static void do_paint(Terminal *term, Context ctx, int may_optimise)
 	     * Separate out sequences of characters that have the
 	     * same CSET, if that CSET is a magic one.
 	     */
+#ifdef ONTHESPOT
+	    if (newline[j].offset == 0)
+#endif
 	    if (CSET_OF(tchar) != cset)
 		break_run = TRUE;
 
