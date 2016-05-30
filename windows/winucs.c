@@ -1204,6 +1204,26 @@ int mb_to_wc(int codepage, int flags, const char *mbstr, int mblen,
     return MultiByteToWideChar(codepage, flags, mbstr, mblen, wcstr, wclen);
 }
 
+// Short-hand function of mb_to_wc, which allocates memory space automatically.
+// IMPORTANT: You must free the pointer returned by this function manually.
+wchar_t *short_mb_to_wc(int codepage, int flags, char *mbstr, int mblen)
+{
+    int wlen = MultiByteToWideChar(codepage, flags, mbstr, mblen, NULL, 0);
+    wchar_t *wstr = snewn(1 + wlen, wchar_t);
+    MultiByteToWideChar(codepage, flags, mbstr, mblen, wstr, wlen);
+    wstr[wlen] = '\0';
+    return wstr;
+}
+
+char *short_wc_to_mb(int codepage, int flags, wchar_t *wstr, int wlen, char *defchar, int *defused)
+{
+	int alen = WideCharToMultiByte(codepage, flags, wstr, wlen, NULL, 0, defchar, defused);
+	char *astr = snewn(1 + alen, char);
+	WideCharToMultiByte(codepage, flags, wstr, wlen, astr, alen, defchar, defused);
+	astr[alen] = '\0';
+	return astr;
+}
+
 int is_dbcs_leadbyte(int codepage, char byte)
 {
     return IsDBCSLeadByteEx(codepage, byte);
