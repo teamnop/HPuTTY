@@ -808,6 +808,9 @@ void cleanup_exit(int);
     X(INT, NONE, width) \
     X(INT, NONE, height) \
     X(FONT, NONE, font) \
+    X(INT, NONE, use_font_unicode) /* Hack: iPuTTY */ \
+    X(FONT, NONE, font_unicode)    /* Hack: iPuTTY */ \
+    X(INT, NONE, font_unicode_adj) /* Hack: iPuTTY */ \
     X(INT, NONE, font_quality) \
     X(FILENAME, NONE, logfilename) \
     X(INT, NONE, logtype) \
