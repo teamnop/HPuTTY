@@ -645,6 +645,14 @@ void save_open_settings(void *sesskey, Conf *conf)
     write_setting_i(sesskey, "TermWidth", conf_get_int(conf, CONF_width));
     write_setting_i(sesskey, "TermHeight", conf_get_int(conf, CONF_height));
     write_setting_fontspec(sesskey, "Font", conf_get_fontspec(conf, CONF_font));
+
+	/*
+	* HACK: iPuTTY
+	*/
+	write_setting_i(sesskey, "UseFontUnicode", conf_get_int(conf, CONF_use_font_unicode));
+	write_setting_fontspec(sesskey, "FontUnicode", conf_get_fontspec(conf, CONF_font_unicode));
+	write_setting_i(sesskey, "FontUnicodeAdjustment", conf_get_int(conf, CONF_font_unicode_adj));
+	
     write_setting_i(sesskey, "FontQuality", conf_get_int(conf, CONF_font_quality));
     write_setting_i(sesskey, "FontVTMode", conf_get_int(conf, CONF_vtmode));
     write_setting_i(sesskey, "UseSystemColours", conf_get_int(conf, CONF_system_colour));
@@ -652,6 +660,7 @@ void save_open_settings(void *sesskey, Conf *conf)
     write_setting_i(sesskey, "ANSIColour", conf_get_int(conf, CONF_ansi_colour));
     write_setting_i(sesskey, "Xterm256Colour", conf_get_int(conf, CONF_xterm_256_colour));
     write_setting_i(sesskey, "BoldAsColour", conf_get_int(conf, CONF_bold_style)-1);
+
 
     for (i = 0; i < 22; i++) {
 	char buf[20], buf2[30];
@@ -992,7 +1001,15 @@ void load_open_settings(void *sesskey, Conf *conf)
     gppfont(sesskey, "Font", conf, CONF_font);
     gppi(sesskey, "FontQuality", FQ_DEFAULT, conf, CONF_font_quality);
     gppi(sesskey, "FontVTMode", VT_UNICODE, conf, CONF_vtmode);
-    gppi(sesskey, "UseSystemColours", 0, conf, CONF_system_colour);
+
+	/*
+	* HACK: iPuTTY
+	*/
+	gppi(sesskey, "UseFontUnicode", 1, conf, CONF_use_font_unicode);
+	gppfont(sesskey, "FontUnicode", conf, CONF_font_unicode);
+	gppi(sesskey, "FontUnicodeAdjustment", 0, conf, CONF_font_unicode_adj);
+
+	gppi(sesskey, "UseSystemColours", 0, conf, CONF_system_colour);
     gppi(sesskey, "TryPalette", 0, conf, CONF_try_palette);
     gppi(sesskey, "ANSIColour", 1, conf, CONF_ansi_colour);
     gppi(sesskey, "Xterm256Colour", 1, conf, CONF_xterm_256_colour);
