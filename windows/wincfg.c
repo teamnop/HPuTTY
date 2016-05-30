@@ -281,6 +281,21 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
      */
     s = ctrl_getset(b, "Window/Appearance", "font",
 		    "Font settings");
+	/*
+	* HACK: iPuTTY
+	*/
+	ctrl_checkbox(s, "Use separated unicode font", 'f',
+		HELPCTX(no_help),
+		conf_checkbox_handler, I(CONF_use_font_unicode));
+	ctrl_fontsel(s, "Font for unicode characters", NO_SHORTCUT,
+		HELPCTX(no_help),
+		conf_fontsel_handler, I(CONF_font_unicode));
+	ctrl_editbox(s, "Adjustment of unicode font (px)", 'a', 20,
+		HELPCTX(no_help),
+		conf_editbox_handler, I(CONF_font_unicode_adj), I(-1));
+	/*
+	* Configurable font quality settings for Windows.
+	*/
     ctrl_checkbox(s, "Allow selection of variable-pitch fonts", NO_SHORTCUT,
                   HELPCTX(appearance_font), variable_pitch_handler, I(0));
     ctrl_radiobuttons(s, "Font quality:", 'q', 2,
