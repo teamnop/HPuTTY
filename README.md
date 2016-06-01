@@ -3,7 +3,20 @@
 
 [PuTTYTray][1] 기반의 [iPuTTY][2]의 한글 패치를 적용한 PuTTY
 
-## iPuTTY 에서 가져온 기능
+## 사용 방법
+
+1. 설치 후 사용
+
+  1. 프로젝트 [Releases](https://github.com/teamnop/HPuTTY/releases/latest) 페이지에서 hputty-*-installer.exe 파일 다운로드
+  2. installer 파일 실행 후 설치
+  3. 시작 메뉴에서 HPuTTY &gt; putty 항목을 찾아 실행
+
+2. 다운로드 후 사용
+
+  1. 프로젝트 [Releases](https://github.com/teamnop/HPuTTY/releases/latest) 페이지에서 putty.exe 다운로드
+  2. putty.exe 실행
+
+## [iPuTTY][2] 에서 가져온 기능
 
 * On-the-spot IME 지원 - IME 조합을 커서에서 직접 조합합니다. IME 조합시 터미널 창을 벗어나서 조합하거나, 커서가 이상 하게 보이는 문제가 해결 됩니다.
 * CP949/UTF-8 빠른 변경 메뉴 - 레거시 서버에서 빠르게 인코딩 전환이 가능합니다.
