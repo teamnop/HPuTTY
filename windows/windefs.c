@@ -1,4 +1,4 @@
-/*
+﻿/*
  * windefs.c: default settings that are specific to Windows.
  */
 
