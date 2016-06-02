@@ -290,7 +290,7 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, int has_help,
 	ctrl_fontsel(s, "Font for unicode characters", NO_SHORTCUT,
 		HELPCTX(no_help),
 		conf_fontsel_handler, I(CONF_font_unicode));
-	ctrl_editbox(s, "Adjustment of unicode font (px)", 'a', 20,
+	ctrl_editbox(s, "Adjustment of unicode font (px)", NO_SHORTCUT, 20,
 		HELPCTX(no_help),
 		conf_editbox_handler, I(CONF_font_unicode_adj), I(-1));
 	/*
