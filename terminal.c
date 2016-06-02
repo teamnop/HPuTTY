@@ -3834,6 +3834,10 @@ static void term_out(Terminal *term)
 				    compatibility(VT100AVO);
 				    term->curr_attr |= ATTR_BOLD;
 				    break;
+				  case 3:   /* enable italic */
+					compatibility(VT100AVO);
+					term->curr_attr |= ATTR_ITALIC;
+					break;
 				  case 21:	/* (enable double underline) */
 				    compatibility(OTHER);
 				  case 4:	/* enable underline */
@@ -3869,6 +3873,10 @@ static void term_out(Terminal *term)
 				    compatibility2(OTHER, VT220);
 				    term->curr_attr &= ~ATTR_BOLD;
 				    break;
+				  case 23:	/* disable bold */
+					compatibility2(OTHER, VT220);
+					term->curr_attr &= ATTR_ITALIC;
+					break;
 				  case 24:	/* disable underline */
 				    compatibility2(OTHER, VT220);
 				    term->curr_attr &= ~ATTR_UNDER;
