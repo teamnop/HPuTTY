@@ -110,6 +110,7 @@ typedef struct terminal_tag Terminal;
 #define ATTR_UNDER   0x080000U
 #define ATTR_REVERSE 0x100000U
 #define ATTR_BLINK   0x200000U
+#define ATTR_ITALIC  0x1000000U
 #define ATTR_FGMASK  0x0001FFU
 #define ATTR_BGMASK  0x03FE00U
 #define ATTR_COLOURS 0x03FFFFU

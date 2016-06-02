@@ -207,17 +207,23 @@ struct agent_callback {
 #define FONT_BOLD 1
 #define FONT_UNDERLINE 2
 #define FONT_BOLDUND 3
-#define FONT_WIDE	0x04
-#define FONT_HIGH	0x08
-#define FONT_NARROW	0x10
+#define FONT_ITALIC     4
+#define FONT_BOLDITA    5
+#define FONT_UNDERITA   6
 
-#define FONT_OEM 	0x20
-#define FONT_OEMBOLD 	0x21
-#define FONT_OEMUND 	0x22
-#define FONT_OEMBOLDUND 0x23
+#define FONT_WIDE	0x08
+#define FONT_HIGH	0x10
+#define FONT_NARROW	0x20
 
-#define FONT_UNICODE	0x2F
-#define FONT_MAXNO 	0x40
+#define FONT_OEM 	0x40
+#define FONT_OEMBOLD 	0x41
+#define FONT_OEMUND 	0x42
+#define FONT_OEMBOLDUND 0x43
+
+#define FONT_UNICODE	0x80
+
+
+#define FONT_MAXNO 	0x8F
 #define FONT_SHIFT	5
 static HFONT fonts[FONT_MAXNO];
 static LOGFONT lfont;
@@ -1813,16 +1819,18 @@ static void init_fonts(int pick_width, int pick_height)
     font_width = pick_width;
 
     quality = conf_get_int(conf, CONF_font_quality);
-#define f(i,c,w,u) \
-    fonts[i] = CreateFont (font_height, font_width, 0, 0, w, FALSE, u, FALSE, \
+#define f(i,c,w,u,it) \
+    fonts[i] = CreateFont (font_height, font_width, 0, 0, w, it, u, FALSE, \
 			   c, OUT_DEFAULT_PRECIS, \
 		           CLIP_DEFAULT_PRECIS, FONT_QUALITY(quality), \
 			   FIXED_PITCH | FF_DONTCARE, font->name)
 
-    f(FONT_NORMAL, font->charset, fw_dontcare, FALSE);
+    f(FONT_NORMAL, font->charset, fw_dontcare, FALSE, FALSE);
+	f(FONT_ITALIC, font->charset, fw_dontcare, FALSE, TRUE);
 
     if (bold_font_mode == BOLD_FONT) {
-        f(FONT_BOLD, font->charset, fw_bold, FALSE);
+        f(FONT_BOLD, font->charset, fw_bold, FALSE, FALSE);
+		f(FONT_BOLDITA, font->charset, fw_bold, FALSE, TRUE);
     }
 
 	if (conf_get_int(conf, CONF_use_font_unicode)) {
@@ -1877,7 +1885,8 @@ static void init_fonts(int pick_width, int pick_height)
 	ucsdata.dbcs_screenfont = (cpinfo.MaxCharSize > 1);
     }
 
-    f(FONT_UNDERLINE, font->charset, fw_dontcare, TRUE);
+    f(FONT_UNDERLINE, font->charset, fw_dontcare, TRUE, FALSE);
+	f(FONT_UNDERITA, font->charset, fw_dontcare, TRUE, TRUE);
 
     /*
      * Some fonts, e.g. 9-pt Courier, draw their underlines
@@ -1924,6 +1933,8 @@ static void init_fonts(int pick_width, int pick_height)
 	    und_mode = UND_LINE;
 	    DeleteObject(fonts[FONT_UNDERLINE]);
 	    fonts[FONT_UNDERLINE] = 0;
+		DeleteObject(fonts[FONT_UNDERITA]);
+		fonts[FONT_UNDERITA] = 0;
 	}
     }
 
@@ -1949,6 +1960,8 @@ static void init_fonts(int pick_width, int pick_height)
 	und_mode = UND_LINE;
 	DeleteObject(fonts[FONT_UNDERLINE]);
 	fonts[FONT_UNDERLINE] = 0;
+	DeleteObject(fonts[FONT_UNDERITA]);
+	fonts[FONT_UNDERITA] = 0;
     }
 
     if (bold_font_mode == BOLD_FONT &&
@@ -1956,6 +1969,8 @@ static void init_fonts(int pick_width, int pick_height)
 	bold_font_mode = BOLD_SHADOW;
 	DeleteObject(fonts[FONT_BOLD]);
 	fonts[FONT_BOLD] = 0;
+	DeleteObject(fonts[FONT_BOLDITA]);
+	fonts[FONT_BOLDITA] = 0;
     }
     fontflag[0] = fontflag[1] = fontflag[2] = 1;
 
@@ -1966,14 +1981,14 @@ static void another_font(int fontno)
 {
     int basefont;
     int fw_dontcare, fw_bold, quality;
-    int c, u, w, x;
+    int c, u, w, x, i;
     char *s;
     FontSpec *font;
 
     if (fontno < 0 || fontno >= FONT_MAXNO || fontflag[fontno])
 	return;
 
-    basefont = (fontno & ~(FONT_BOLDUND));
+    basefont = (fontno & ~(FONT_BOLDUND) & ~(FONT_ITALIC));
     if (basefont != fontno && !fontflag[basefont])
 	another_font(basefont);
 
@@ -1990,6 +2005,7 @@ static void another_font(int fontno)
     c = font->charset;
     w = fw_dontcare;
     u = FALSE;
+	i = FALSE;
     s = font->name;
     x = font_width;
 
@@ -2003,12 +2019,14 @@ static void another_font(int fontno)
 	w = fw_bold;
     if (fontno & FONT_UNDERLINE)
 	u = TRUE;
+	if (fontno & FONT_ITALIC)
+	i = TRUE;
 
     quality = conf_get_int(conf, CONF_font_quality);
 
     fonts[fontno] =
 	CreateFont(font_height * (1 + !!(fontno & FONT_HIGH)), x, 0, 0, w,
-		   FALSE, u, FALSE, c, OUT_DEFAULT_PRECIS,
+		   i, u, FALSE, c, OUT_DEFAULT_PRECIS,
 		   CLIP_DEFAULT_PRECIS, FONT_QUALITY(quality),
 		   DEFAULT_PITCH | FF_DONTCARE, s);
 
@@ -4160,6 +4178,9 @@ void do_text_internal(Context ctx, int x, int y, wchar_t *text, int len,
 	    attr &= ~ATTR_UNDER;
 	    force_manual_underline = 1;
 	}
+	if (attr & ATTR_ITALIC) {
+		attr &= ~ATTR_ITALIC;
+	}
     }
 #endif
 
@@ -4181,13 +4202,15 @@ void do_text_internal(Context ctx, int x, int y, wchar_t *text, int len,
 	nfont |= FONT_BOLD;
     if (und_mode == UND_FONT && (attr & ATTR_UNDER))
 	nfont |= FONT_UNDERLINE;
+	if (attr & ATTR_ITALIC)
+	nfont |= FONT_ITALIC;
     another_font(nfont);
     if (!fonts[nfont]) {
 	if (nfont & FONT_UNDERLINE)
 	    force_manual_underline = 1;
 	/* Don't do the same for manual bold, it could be bad news. */
 
-	nfont &= ~(FONT_BOLD | FONT_UNDERLINE);
+	nfont &= ~(FONT_BOLD | FONT_UNDERLINE | FONT_ITALIC);
     }
     another_font(nfont);
     if (!fonts[nfont])
