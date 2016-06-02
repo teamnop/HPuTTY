@@ -1209,6 +1209,7 @@ int wc_to_mb(int codepage, int flags, const wchar_t *wcstr, int wclen,
 	     char *mbstr, int mblen, char *defchr, int *defused,
 	     struct unicode_data *ucsdata);
 wchar_t *short_mb_to_wc(int codepage, int flags, char *mbstr, int mblen);
+char *short_wc_to_mb(int codepage, int flags, wchar_t *wstr, int wlen, char *defchar, int *defused);
 wchar_t xlat_uskbd2cyrllic(int ch);
 int check_compose(int first, int second);
 int decode_codepage(char *cp_name);
