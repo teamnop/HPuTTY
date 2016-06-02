@@ -4901,76 +4901,69 @@ static int TranslateKey(UINT message, WPARAM wParam, LPARAM lParam,
 	    term->app_keypad_keys ^= 1;
 	    return 0;
 	}
-	// TODO: transparency mode를 찾지 못하여 임시로 비활성화 해둠
 	/* HACK: iPuTTY (by bluehope)
-	 * alt+[,] to switch transparency between (50,cfg.transparency,255)
+	 * alt+[,] to switch transparency between (50,200,255)
 	 * alt+{,} to change cfg.transparency in 5 step
 	 */
-	/*if (left_alt && wParam == VK_OEM_4){
+	const int almost_transp = 50;
+	const int semi_transp = 200;
+	const int opaque = 255;
+
+	if (left_alt && wParam == VK_OEM_4) {
 	    if (0 == shift_state){
-		int transp_mode = conf_get_int(conf, CONF_transparency_mode);
-		transp_mode --;
-		transp_mode = max(0, transp_mode);
-		switch (transp_mode)
-		{
-		  case 0:
-		    MakeWindowTransparent(hwnd, 50);
-		    break;
-		  case 1:
-		    MakeWindowTransparent(hwnd, conf_get_int(conf, CONF_transparency));
-		    break;
-		  case 2:
-		    MakeWindowTransparent(hwnd, 255);
-		    break;
-		  default:
-		    MakeWindowTransparent(hwnd, 255);
-		    break;
-		}
-		conf_set_int(conf, CONF_transparency_mode, transp_mode);
+			int transp = conf_get_int(conf, CONF_transparency);
+			int target_transp = opaque;
+
+			if (transp > semi_transp) {
+				target_transp = semi_transp;
+			}
+			else {
+				target_transp = almost_transp;
+			}
+
+			MakeWindowTransparent(hwnd, target_transp);
+
+			conf_set_int(conf, CONF_transparency, target_transp);
 	    }
 	    else if (1 == shift_state)
 	    {
-		int transp = conf_get_int(conf, CONF_transparency);
-		conf_set_int(conf, CONF_transparency_mode, 1);
-		transp -= 5;
-		transp = max(50, transp);
-		MakeWindowTransparent(hwnd, transp);
-		conf_set_int(conf, CONF_transparency, transp);
+			int transp = conf_get_int(conf, CONF_transparency);
+
+			transp -= 5;
+			transp = max(50, transp);
+
+			MakeWindowTransparent(hwnd, transp);
+			conf_set_int(conf, CONF_transparency, transp);
 	    }
 	    return -1;
 	}
-	if (left_alt && wParam == VK_OEM_6){
+	else if (left_alt && wParam == VK_OEM_6){
 	    if(0==shift_state){
-		int transp_mode = conf_get_int(conf, CONF_transparency_mode);
-		transp_mode ++;
-		transp_mode = min(2, transp_mode);
-		switch (transp_mode)
-		{
-		  case 0:
-		    MakeWindowTransparent(hwnd, 50);
-		    break;
-		  case 1:
-		    MakeWindowTransparent(hwnd, conf_get_int(conf, CONF_transparency));
-		    break;
-		  case 2:
-		    MakeWindowTransparent(hwnd, 255);
-		    break;
-		  default:
-		    MakeWindowTransparent(hwnd, 255);
-		    break;
-		}
-		conf_set_int(conf, CONF_transparency_mode, transp_mode);
-	    } else if (1 == shift_state)
-	    {
-		int transp = conf_get_int(conf, CONF_transparency);
-		conf_set_int(conf, CONF_transparency_mode, 1);
-		transp += 5;
-		transp = min(255, transp);
-		MakeWindowTransparent(hwnd, transp);
-		conf_set_int(conf, CONF_transparency, transp);
+			int transp = conf_get_int(conf, CONF_transparency);
+			int target_transp = opaque;
+
+			if (transp < semi_transp) {
+				target_transp = semi_transp;
+			}
+			else {
+				target_transp = opaque;
+			}
+
+			MakeWindowTransparent(hwnd, target_transp);
+
+			conf_set_int(conf, CONF_transparency, target_transp);
+	    }
+		else if (1 == shift_state) {
+			int transp = conf_get_int(conf, CONF_transparency);
+
+			transp += 5;
+			transp = min(255, transp);
+
+			MakeWindowTransparent(hwnd, transp);
+			conf_set_int(conf, CONF_transparency, transp);
 	    }
 	    return -1;
-	}*/
+	}
 	/* Nethack keypad */
 	if (nethack_keypad && !left_alt) {
 	    switch (wParam) {
