@@ -65,6 +65,7 @@
 #define IDM_SAVED_MIN 0x1000
 #define IDM_SAVED_MAX 0x5000
 #define IDM_UNICODE	  0x2000
+#define IDM_NEXTWINDOW 0x0250
 #define MENU_SAVED_STEP 16
 
 #define IDM_URL_MIN 0x5001
@@ -295,6 +296,20 @@ static BOOL initialized = FALSE;
 #if !defined(LWA_ALPHA)
 	#define LWA_ALPHA	0x00000002
 #endif
+
+/*
+ * HACK: iPuTTY
+ * fast switch other putty windows.
+*/
+
+typedef struct _FRIEND_WINDOW {
+	HWND hwnd;
+	int pid;
+} FRIEND_WINDOW;
+#define MAX_FRIENDS 100
+static FRIEND_WINDOW friend_windows[MAX_FRIENDS];
+static int num_friends;
+static HWND find_next_window(void);
 
 /*
  * HACK: PuttyTray
@@ -1027,6 +1042,8 @@ int putty_main(HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
             } else {
                 AppendMenu(m, MF_ENABLED | MF_UNCHECKED, IDM_VISIBLE, "Alwa&ys on top");
             }
+
+		AppendMenu(m, MF_ENABLED, IDM_NEXTWINDOW, "Next &Window\tCtrl+Tab");
 
 	    AppendMenu(m, MF_SEPARATOR, 0, 0);
 	    if (has_help())
@@ -2892,6 +2909,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
 		  CheckMenuItem(GetSystemMenu(hwnd, FALSE), IDM_UNICODE, strcmp(cur_line_codepage, "UTF-8") ? MF_UNCHECKED : MF_CHECKED);
 	  }
 	    break;
+	  case IDM_NEXTWINDOW:
+	  {
+		  HWND hNext = find_next_window();
+		  SetForegroundWindow(hNext);
+		  break;
+	  }
 	  case IDM_HELP:
 	    launch_help(hwnd, NULL);
 	    break;
@@ -5007,6 +5030,14 @@ static int TranslateKey(UINT message, WPARAM wParam, LPARAM lParam,
 	    }
 	    return -1;
 	}
+	/*
+	 * HACK: iPuTTY
+	 * switch next window (ctrl + tab)
+	 */
+	else if ((keystate[VK_CONTROL] & 0x80) && wParam == VK_TAB )
+	{
+		SendMessage(hwnd, WM_SYSCOMMAND, IDM_NEXTWINDOW, 0);
+	}
 	/* Nethack keypad */
 	if (nethack_keypad && !left_alt) {
 	    switch (wParam) {
@@ -6902,3 +6933,52 @@ void tray_updatemenu(BOOL disableMenuItems)
     SetMenuItemInfo(popup_menus[CTXMENU].menu, IDM_COPYALL, FALSE, &mii);
 }
 
+BOOL CALLBACK EnumWndProc(HWND hwnd, LPARAM lparam)
+{
+	char strClass[50] = { 0 };
+	int pid;
+	if (lparam == IDM_NEXTWINDOW) {
+		GetClassName(hwnd, strClass, 50);
+		if (strcmp(strClass, appname) == 0 && IsWindowVisible(hwnd)) {
+			if (num_friends == MAX_FRIENDS) // full....
+				return FALSE;
+			friend_windows[num_friends].hwnd = hwnd;
+			GetWindowThreadProcessId(hwnd, &pid);
+			friend_windows[num_friends].pid = pid;
+			num_friends++;
+		}
+	}
+	return TRUE;
+}
+
+static HWND find_next_window(void)
+{
+	int i, j;
+	FRIEND_WINDOW val;
+	num_friends = 0;
+	EnumWindows(EnumWndProc, IDM_NEXTWINDOW);
+	// Sort, because the retrieving order of EnumWindows is not defined.
+	for (i = 1; i < num_friends; i++) {
+		val = friend_windows[i];
+		j = i - 1;
+		// pid for each window is unique, because each process can only have
+		// at most one session window.
+		while (j >= 0 && friend_windows[j].pid > val.pid)
+		{
+			friend_windows[j + 1] = friend_windows[j];
+			j--;
+		}
+		friend_windows[j + 1] = val;
+	}
+	// Find the next window in the sorted array.
+	for (i = 0; i < num_friends; i++) {
+		if (friend_windows[i].hwnd == hwnd) {
+			if (i == num_friends - 1)
+				i = 0;
+			else
+				i += 1;
+			return friend_windows[i].hwnd;
+		}
+	}
+	return 0;
+}
