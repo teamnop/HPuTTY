@@ -225,7 +225,7 @@ static int CALLBACK AboutProc(HWND hwnd, UINT msg,
 	  case IDA_WEB:
 	    /* Load web browser */
 	    ShellExecute(hwnd, "open",
-			 "http://puttytray.goeswhere.com/",
+			 "http://hputty.org/",
 			 0, 0, SW_SHOWDEFAULT);
 	    return 0;
 	}
