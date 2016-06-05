@@ -226,6 +226,7 @@ struct agent_callback {
 #define FONT_OEMBOLDUND 0x43
 
 #define FONT_UNICODE	0x80
+#define FONT_FALLBACK	0x81
 
 
 #define FONT_MAXNO 	0x8F
@@ -1860,6 +1861,7 @@ static void init_fonts(int pick_width, int pick_height)
 			font_unicode->charset, OUT_DEFAULT_PRECIS, \
 			CLIP_DEFAULT_PRECIS, FONT_QUALITY(quality), \
 			FIXED_PITCH | FF_DONTCARE, font_unicode->name);
+		fonts[FONT_FALLBACK] = 0;
 	}
 	else
 		fonts[FONT_UNICODE] = NULL;
@@ -4579,7 +4581,41 @@ void do_text_internal(Context ctx, int x, int y, wchar_t *text, int len,
 
 			/* IPUTTY PATCH: non-latin font replacing... */
 			if (conf_get_int(conf, CONF_use_font_unicode)) {
+				
 				SelectObject(hdc, fonts[FONT_UNICODE]);
+				DWORD *indicies = snewn(len, DWORD);
+				GetGlyphIndicesW(hdc, wbuf, len, indicies, GGI_MARK_NONEXISTING_GLYPHS);
+
+				BOOL useFontFallback = FALSE;
+				for (i = 0; i < len; i++)
+				{
+					if ((indicies[i] & 0x0000ffff) == 0xffff)
+					{
+						useFontFallback = TRUE;
+						break;
+					}
+				}
+				
+				sfree(indicies);
+
+				if (useFontFallback != FALSE)
+				{
+					LOGFONT newFont;
+					newFont.lfFaceName[0] = 0;
+					if (choose_fallback_font(hdc, fonts[FONT_UNICODE], wbuf, len, &newFont) != 0)
+					{
+						if (fonts[FONT_FALLBACK] != 0)
+						{
+							DeleteObject(fonts[FONT_FALLBACK]);
+						}
+						LOGFONT unicodeFont;
+						GetObject(fonts[FONT_UNICODE], sizeof(LOGFONT), &unicodeFont);
+						strcpy(unicodeFont.lfFaceName, newFont.lfFaceName);
+						fonts[FONT_FALLBACK] = CreateFontIndirect(&unicodeFont);
+						SelectObject(hdc, fonts[FONT_FALLBACK]);
+					}
+				}
+
 				text_adjust = conf_get_int(conf, CONF_font_unicode_adj);
 			}
 			
