@@ -33,6 +33,9 @@
 #include <richedit.h>
 #include <mmsystem.h>
 
+#include <usp10.h>
+#include <wingdi.h>
+
 /* From MSDN: In the WM_SYSCOMMAND message, the four low-order bits of
  * wParam are used by Windows, and should be masked off, so we shouldn't
  * attempt to store information in them. Hence all these identifiers have
@@ -123,6 +126,7 @@ static void init_palette(void);
 static void init_fonts(int, int);
 static void another_font(int);
 static void deinit_fonts(void);
+static BOOL choose_fallback_font(HDC hdc, HFONT font, const wchar_t* text, int text_length, LOGFONT* result);
 static void set_input_locale(HKL);
 static void update_savedsess_menu(void);
 static void init_winfuncs(void);
@@ -2059,6 +2063,125 @@ static void deinit_fonts(void)
 	fonts[i] = 0;
 	fontflag[i] = 0;
     }
+}
+
+void ConvertLOGFONTW2LOGFONTA(LOGFONTW *src, LOGFONTA* dest)
+{
+	char* facename;
+	int chrsize;
+
+	chrsize = WideCharToMultiByte(CP_ACP, 0, src->lfFaceName, -1, 0, 0, 0, 0);
+
+	facename = (char*)malloc(sizeof(char)*chrsize);
+
+	WideCharToMultiByte(CP_ACP, 0, src->lfFaceName, -1, facename, chrsize, 0, 0);
+
+	memcpy(dest, src, sizeof(LOGFONTA));
+	strcpy(dest->lfFaceName, facename);
+	free(facename);
+}
+
+// Copyright 2015 The Chromium Authors.All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//    * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//    * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//    * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+// Callback to |EnumEnhMetaFile()| to intercept font creation.
+int CALLBACK MetaFileEnumProc(HDC hdc, HANDLETABLE* table, CONST ENHMETARECORD* record, int table_entries, LPARAM log_font)
+{
+	if (record->iType == EMR_EXTCREATEFONTINDIRECTW)
+	{
+		const EMREXTCREATEFONTINDIRECTW* create_font_record = (EMREXTCREATEFONTINDIRECTW*)(record);
+		ConvertLOGFONTW2LOGFONTA(&create_font_record->elfw.elfLogFont, ((LOGFONT*)log_font));
+	}
+	return 1;
+}
+
+// Copyright 2015 The Chromium Authors.All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//    * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//    * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//    * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+static BOOL choose_fallback_font(HDC hdc, HFONT font, const wchar_t* text, int text_length, LOGFONT* result)
+{
+	// Use a meta file to intercept the fallback font chosen by Uniscribe.
+	HDC meta_file_dc = CreateEnhMetaFile(hdc, NULL, NULL, NULL);
+	if (!meta_file_dc)
+		return FALSE;
+
+	if (font)
+		SelectObject(meta_file_dc, font);
+
+	SCRIPT_STRING_ANALYSIS script_analysis;
+	HRESULT hresult =
+		ScriptStringAnalyse(meta_file_dc, text, text_length, 0, -1,
+			SSA_METAFILE | SSA_FALLBACK | SSA_GLYPHS | SSA_LINK,
+			0, NULL, NULL, NULL, NULL, NULL, &script_analysis);
+
+	if (SUCCEEDED(hresult)) {
+		hresult = ScriptStringOut(script_analysis, 0, 0, 0, NULL, 0, 0, FALSE);
+		ScriptStringFree(&script_analysis);
+	}
+
+	BOOL found_fallback = FALSE;
+	HENHMETAFILE meta_file = CloseEnhMetaFile(meta_file_dc);
+	if (SUCCEEDED(hresult)) {
+		LOGFONT log_font;
+		log_font.lfFaceName[0] = 0;
+		EnumEnhMetaFile(0, meta_file, MetaFileEnumProc, &log_font, NULL);
+		if (log_font.lfFaceName[0]) {
+			*result = log_font;
+			found_fallback = TRUE;
+		}
+	}
+	DeleteEnhMetaFile(meta_file);
+
+	return found_fallback;
 }
 
 void request_resize(void *frontend, int w, int h)
