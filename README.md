@@ -1,7 +1,7 @@
 # HPuTTY
 
 
-[PuTTYTray][1] 기반의 [iPuTTY][2]의 한글 패치를 적용한 PuTTY
+[PuTTYTray][1] + [iPuTTY][2] 기반으로 개발한 한글 PuTTY 클라이언트
 
 ## 사용 방법
 
