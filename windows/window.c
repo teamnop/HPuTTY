@@ -4563,6 +4563,8 @@ void do_text_internal(Context ctx, int x, int y, wchar_t *text, int len,
 			if (conf_get_int(conf, CONF_use_font_unicode)) {
 				
 				SelectObject(hdc, fonts[FONT_UNICODE]);
+
+				/* hPutty Patch: unicode font fallback */
 				DWORD *indicies = snewn(len, DWORD);
 				GetGlyphIndicesW(hdc, wbuf, len, indicies, GGI_MARK_NONEXISTING_GLYPHS);
 
