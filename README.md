@@ -16,6 +16,10 @@
   1. 프로젝트 [Releases](https://github.com/teamnop/HPuTTY/releases/latest) 페이지에서 putty.exe 다운로드
   2. putty.exe 실행
 
+## HPuTTY 에서 추가한 기능
+
+* Unicode fallback font 지원 - 폰트에 특정 유니코드 글자가 없더라도 표시 할 수 있는 다른 폰트로 대체하여 표시해줍니다.
+
 ## [iPuTTY][2] 에서 가져온 기능
 
 * On-the-spot IME 지원 - IME 조합을 커서에서 직접 조합합니다. IME 조합시 터미널 창을 벗어나서 조합하거나, 커서가 이상 하게 보이는 문제가 해결 됩니다.
