@@ -1155,11 +1155,13 @@ if (defined $makefiles{'vstudio10'} || defined $makefiles{'vstudio12'}) {
             "    <OutDir>.\\Release\\</OutDir>\n" .
             "    <IntDir>.\\Release\\</IntDir>\n" .
             "    <LinkIncremental>false</LinkIncremental>\n" .
+			"    <GenerateManifest>false</GenerateManifest>\n" .
             "  </PropertyGroup>\n" .
             "  <PropertyGroup Condition=\"'\$(Configuration)|\$(Platform)'=='Debug|Win32'\">\n" .
             "    <OutDir>.\\Debug\\</OutDir>\n" .
             "    <IntDir>.\\Debug\\</IntDir>\n" .
             "    <LinkIncremental>true</LinkIncremental>\n" .
+			"    <GenerateManifest>false</GenerateManifest>\n" .
             "  </PropertyGroup>\n" .
             "  <ItemDefinitionGroup Condition=\"'\$(Configuration)|\$(Platform)'=='Release|Win32'\">\n" .
             "    <ClCompile>\n" .
