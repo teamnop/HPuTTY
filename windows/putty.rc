@@ -8,9 +8,18 @@
 #include "pageant.rc"
 
 #ifndef NO_MANIFESTS
+
+#ifndef RT_MANIFEST
+#define RT_MANIFEST 24
+#endif
+
+#ifndef APP_MANIFEST
+#define APP_MANIFEST 1
+#endif
+
 #ifndef _WIN64
-1 RT_MANIFEST "putty.mft"
+APP_MANIFEST RT_MANIFEST "putty.mft"
 #else
-1 RT_MANIFEST "putty64.mft"
+APP_MANIFEST RT_MANIFEST "putty64.mft"
 #endif
 #endif /* NO_MANIFESTS */
