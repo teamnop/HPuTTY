@@ -1,7 +1,9 @@
 # HPuTTY에 기여하기
 
-우선 HPuTTY 기여에 관심 가져주셔서 감사합니다.
-아래 가이드 라인에 따라 기여해주시면 저희가 HPuTTY를 발전시키는데 많은 도움이 됩니다.
+1. 저장소를 Fork후 Clone 합니다
+2. [Visual Studio 2015 Community로 빌드하기](https://github.com/teamnop/HPuTTY/wiki/Visual-Studio-2015-Community-%EB%A1%9C-%EB%B9%8C%EB%93%9C%ED%95%98%EA%B8%B0) 문서를 참고하여 빌드를 합니다.
+3. 아래 가이드라인에 따라 코드를 편집합니다.
+4. Pull-Request를 보냅니다.
 
 ## 코드에 기여하기
 
@@ -18,4 +20,3 @@ HPuTTY는 upstream(PuTTYTray)의 변경점을 지속적으로 반응하는것을
    */
 ````
 
-코드를 수정하신 뒤에 가능하면 기능 단위로 Pull-Request를 보내주시면 감사하겠습니다.
