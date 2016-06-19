@@ -319,12 +319,12 @@ static HWND find_next_window(void);
  * HACK: PuttyTray
  * Trayicon struct, Message ID and functions
  */
-static NOTIFYICONDATA puttyTray;
+static NOTIFYICONDATAW puttyTray;
 static BOOL puttyTrayVisible;
 static BOOL puttyTrayFlash;
 static HICON puttyTrayFlashIcon;
 static BOOL windowMinimized = FALSE;
-BOOL taskbar_addicon(LPSTR lpszTip, BOOL showIcon);
+BOOL taskbar_addicon(LPWSTR lpszTip, BOOL showIcon);
 void tray_updatemenu(BOOL disableMenuItems);
 enum {
     WM_NOTIFY_PUTTYTRAY = WM_USER + 1983,
@@ -1195,7 +1195,7 @@ void cleanup_exit(int code)
     /* HACK: PuttyTray 
      * Remove trayicon on close 
      */
-    taskbar_addicon("", FALSE);
+    taskbar_addicon(L"", FALSE);
     DestroyIcon(puttyTray.hIcon);
 
     /*
@@ -2848,12 +2848,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
 			ShowWindow(hwnd, SW_HIDE);
 			taskbar_addicon(conf_get_int(conf, CONF_win_name_always) ? window_name : icon_name, TRUE);
 		    } else {
-			taskbar_addicon("", FALSE);
+			taskbar_addicon(L"", FALSE);
 		    }
 		} else if (conf_get_int(conf, CONF_tray) == TRAY_ALWAYS) {
 		    taskbar_addicon(conf_get_int(conf, CONF_win_name_always) ? window_name : icon_name, TRUE);
 		} else {
-		    taskbar_addicon("", FALSE);
+		    taskbar_addicon(L"", FALSE);
 		}
 
 		/* Screen size changed ? */
@@ -4565,7 +4565,7 @@ void do_text_internal(Context ctx, int x, int y, wchar_t *text, int len,
 				SelectObject(hdc, fonts[FONT_UNICODE]);
 
 				/* hPutty Patch: unicode font fallback */
-				DWORD *indicies = snewn(len, DWORD);
+				WORD *indicies = snewn(len * 2, WORD);
 				GetGlyphIndicesW(hdc, wbuf, len, indicies, GGI_MARK_NONEXISTING_GLYPHS);
 
 				BOOL useFontFallback = FALSE;
@@ -5798,7 +5798,7 @@ static int TranslateKey(UINT message, WPARAM wParam, LPARAM lParam,
     return -1;
 }
 
-void set_title(void *frontend, char *title)
+void set_title(void *frontend, const wchar_t *title)
 {
 	int len = wcslen(title);
 	sfree(window_name);
@@ -6997,32 +6997,32 @@ void MakeWindowOnTop(HWND hwnd) {
  * HACK: PuttyTray
  * Function to add icon to the taskbar's system tray
  */
-BOOL taskbar_addicon(LPSTR lpszTip, BOOL showIcon) 
+BOOL taskbar_addicon(LPWSTR lpszTip, BOOL showIcon) 
 { 
     BOOL icon_result; 
 
     if (showIcon) {
 	// Set Tooltip
 	if (lpszTip) {
-	    strncpy(puttyTray.szTip, lpszTip, sizeof(puttyTray.szTip));
+	    wcsncpy(puttyTray.szTip, lpszTip, sizeof(puttyTray.szTip));
 	} else {
-	    puttyTray.szTip[0] = (TCHAR)'\0'; 
+	    puttyTray.szTip[0] = (WCHAR)'\0'; 
 	}
 
 	// Set icon visibility
 	if (!puttyTrayVisible) {
 	    tray_updatemenu(TRUE);
-	    icon_result = Shell_NotifyIcon(NIM_ADD, &puttyTray);
+	    icon_result = Shell_NotifyIconW(NIM_ADD, &puttyTray);
 	    puttyTrayVisible = TRUE;
 	    return icon_result; 
 	} else {
-	    icon_result = Shell_NotifyIcon(NIM_MODIFY, &puttyTray);
+	    icon_result = Shell_NotifyIconW(NIM_MODIFY, &puttyTray);
 	    return icon_result; 
 	}
     } else {
 	if (puttyTrayVisible) {
 	    tray_updatemenu(FALSE);
-	    icon_result = Shell_NotifyIcon(NIM_DELETE, &puttyTray);
+	    icon_result = Shell_NotifyIconW(NIM_DELETE, &puttyTray);
 	    puttyTrayVisible = FALSE;
 	    return icon_result; 
 	}
