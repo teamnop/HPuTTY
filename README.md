@@ -37,7 +37,7 @@
 
 MIT license.
 
-자세한 내용은 `LICENSE` 파일을 참고하세요.
+자세한 내용은 `LICENCE` 파일을 참고하세요.
 
   [1]: https://puttytray.goeswhere.com/
   [2]: https://bitbucket.org/daybreaker/iputty/
