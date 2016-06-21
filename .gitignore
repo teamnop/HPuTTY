@@ -130,6 +130,7 @@
 /windows/DEVCPP
 /windows/VS2010
 /windows/VS2012
+/windows/VS2015
 /windows/*.log
 /windows/*.GID
 /windows/local
