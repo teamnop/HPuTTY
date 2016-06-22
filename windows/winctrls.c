@@ -2322,7 +2322,7 @@ void dlg_label_change(union control *ctrl, void *dlg, char const *text)
 	break;
     }
     if (escaped) {
-	SetDlgItemText(dp->hwnd, id, escaped);
+	SetDlgItemTextAL(dp->hwnd, id, escaped);
 	sfree(escaped);
     }
 }
