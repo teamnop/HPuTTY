@@ -13,4 +13,4 @@ HWND WINAPI CreateWindowExAL(_In_ DWORD dwExStyle,
 	_In_opt_ HINSTANCE hInstance,
 	_In_opt_ LPVOID lpParam);
 
-BOOL  WINAPI TextOutAL(_In_ HDC hdc, _In_ int x, _In_ int y, _In_reads_(c) LPCSTR lpString, _In_ int c);
+BOOL WINAPI TextOutAL(_In_ HDC hdc, _In_ int x, _In_ int y, _In_reads_(c) LPCSTR lpString, _In_ int c);
