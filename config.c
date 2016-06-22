@@ -1504,6 +1504,12 @@ void setup_config_box(struct controlbox *b, int midsession,
                       "Never", I(FORCE_OFF),
                       "Only on clean exit", I(AUTO), NULL);
 
+	ctrl_radiobuttons(s, "UI Language (requires restart):", NO_SHORTCUT, 2,
+		HELPCTX(localization_ui),
+		conf_radiobutton_handler,
+		I(CONF_localization_ui),
+		"English", NO_SHORTCUT, I(ENGLISH),
+		"Korean", NO_SHORTCUT, I(KOREAN), NULL);
     /*
      * The Session/Logging panel.
      */
