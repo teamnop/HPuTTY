@@ -590,7 +590,7 @@ HTREEITEM TreeView_InsertItemAL(HWND hwnd, LPTV_INSERTSTRUCTA lpis)
 	}
 }
 
-BOOL  WINAPI TextOutAL(_In_ HDC hdc, _In_ int x, _In_ int y, _In_reads_(c) LPCSTR lpString, _In_ int c)
+BOOL WINAPI TextOutAL(_In_ HDC hdc, _In_ int x, _In_ int y, _In_reads_(c) LPCSTR lpString, _In_ int c)
 {
 	wchar_t* localization = get_localization_text(lpString);
 
