@@ -603,3 +603,17 @@ BOOL WINAPI TextOutAL(_In_ HDC hdc, _In_ int x, _In_ int y, _In_reads_(c) LPCSTR
 		return TextOutA(hdc, x, y, lpString, c);
 	}
 }
+
+BOOL WINAPI SetDlgItemTextAL(_In_ HWND hDlg, _In_ int nIDDlgItem, _In_ LPCSTR lpString)
+{
+	wchar_t* localization = get_localization_text(lpString);
+
+	if (localization != NULL)
+	{
+		return SetDlgItemTextW(hDlg, nIDDlgItem, localization);
+	}
+	else
+	{
+		return SetDlgItemTextA(hDlg, nIDDlgItem, lpString);
+	}
+}
