@@ -20,6 +20,13 @@
 #include <commdlg.h>
 #include <shellapi.h>
 
+/*
+ * Hack: HPuTTY
+ Define l10n treeview function.
+*/
+#include "localization.h"
+HTREEITEM TreeView_InsertItemAL(HWND hwnd, LPTV_INSERTSTRUCTA lpis);
+
 #ifdef MSVC4
 #define TVINSERTSTRUCT  TV_INSERTSTRUCT
 #define TVITEM          TV_ITEM
@@ -331,7 +338,7 @@ static HTREEITEM treeview_insert(struct treeview_faff *faff,
     ins.INSITEM.pszText = text;
     ins.INSITEM.cchTextMax = strlen(text)+1;
     ins.INSITEM.lParam = (LPARAM)path;
-    newitem = TreeView_InsertItem(faff->treeview, &ins);
+    newitem = TreeView_InsertItemAL(faff->treeview, &ins);
     if (level > 0)
 	TreeView_Expand(faff->treeview, faff->lastat[level - 1],
 			(level > 1 ? TVE_COLLAPSE : TVE_EXPAND));

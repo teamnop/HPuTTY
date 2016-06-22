@@ -19,6 +19,7 @@
 #define WINHELP_CTX_session_hostname "session.hostname:config-hostname"
 #define WINHELP_CTX_session_saved "session.saved:config-saving"
 #define WINHELP_CTX_session_coe "session.coe:config-closeonexit"
+#define WINHELP_CTX_localization_ui "session.coe:config-localization-ui"
 #define WINHELP_CTX_logging_main "logging.main:config-logging"
 #define WINHELP_CTX_logging_filename "logging.filename:config-logfilename"
 #define WINHELP_CTX_logging_exists "logging.exists:config-logfileexists"

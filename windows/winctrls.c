@@ -19,6 +19,7 @@
 #include "putty.h"
 #include "misc.h"
 #include "dialog.h"
+#include "localization.h"
 
 #include <commctrl.h>
 
@@ -80,7 +81,7 @@ HWND doctl(struct ctlpos *cp, RECT r,
      * without creating any actual controls.
      */
     if (cp->hwnd) {
-	ctl = CreateWindowEx(exstyle, wclass, wtext, wstyle,
+	ctl = CreateWindowExAL(exstyle, wclass, wtext, wstyle,
 			     r.left, r.top, r.right, r.bottom,
 			     cp->hwnd, (HMENU) wid, hinst, NULL);
 	SendMessage(ctl, WM_SETFONT, cp->font, MAKELPARAM(TRUE, 0));
@@ -1792,7 +1793,7 @@ int winctrl_handle_command(struct dlgparam *dp, UINT msg,
 	GetTextExtentPoint32(hdc, (char *)c->data,
 				 strlen((char *)c->data), &s);
 	DrawEdge(hdc, &r, EDGE_ETCHED, BF_ADJUST | BF_RECT);
-	TextOut(hdc,
+	TextOutAL(hdc,
 		r.left + (r.right-r.left-s.cx)/2,
 		r.top + (r.bottom-r.top-s.cy)/2,
 		(char *)c->data, strlen((char *)c->data));
