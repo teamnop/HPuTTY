@@ -516,6 +516,7 @@ void save_open_settings(void *sesskey, Conf *conf)
     /* The CloseOnExit numbers are arranged in a different order from
      * the standard FORCE_ON / FORCE_OFF / AUTO. */
     write_setting_i(sesskey, "CloseOnExit", (conf_get_int(conf, CONF_close_on_exit)+2)%3);
+	write_setting_i(sesskey, "LocalizationUI", conf_get_int(conf, CONF_localization_ui));
     write_setting_i(sesskey, "WarnOnClose", !!conf_get_int(conf, CONF_warn_on_close));
     write_setting_i(sesskey, "PingInterval", conf_get_int(conf, CONF_ping_interval) / 60);	/* minutes */
     write_setting_i(sesskey, "PingIntervalSecs", conf_get_int(conf, CONF_ping_interval) % 60);	/* seconds */
@@ -813,6 +814,7 @@ void load_open_settings(void *sesskey, Conf *conf)
     /* The CloseOnExit numbers are arranged in a different order from
      * the standard FORCE_ON / FORCE_OFF / AUTO. */
     i = gppi_raw(sesskey, "CloseOnExit", 1); conf_set_int(conf, CONF_close_on_exit, (i+1)%3);
+	gppi(sesskey, "LocalizationUI", 1, conf, CONF_localization_ui);
     gppi(sesskey, "WarnOnClose", 1, conf, CONF_warn_on_close);
     {
 	/* This is two values for backward compatibility with 0.50/0.51 */

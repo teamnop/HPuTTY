@@ -377,6 +377,13 @@ enum {
 };
 
 /*
+ * Hack: HPuTTY
+ * Localization enum
+*/
+enum {
+	ENGLISH, KOREAN
+};
+/*
  * Tables of string <-> enum value mappings used in settings.c.
  * Defined here so that backends can export their GSS library tables
  * to the cross-platform settings code.
@@ -688,6 +695,7 @@ void cleanup_exit(int);
     X(INT, NONE, addressfamily) \
     X(INT, NONE, close_on_exit) \
     X(INT, NONE, warn_on_close) \
+	X(INT, NONE, localization_ui) \
     X(INT, NONE, ping_interval) /* in seconds */ \
     X(INT, NONE, tcp_nodelay) \
     X(INT, NONE, tcp_keepalives) \
