@@ -4579,13 +4579,15 @@ void do_text_internal(Context ctx, int x, int y, wchar_t *text, int len,
             for (i = 0; i < len; i++)
                 wbuf[i] = text[i];
 
-			/* IPUTTY PATCH: non-latin font replacing... */
+			/* IPUTTY PATCH: non-Wlatin font replacing... */
 			if (conf_get_int(conf, CONF_use_font_unicode)) {
 				
 				SelectObject(hdc, fonts[FONT_UNICODE]);
 
-				/* hPutty Patch: unicode font fallback */
-				WORD *indicies = snewn(len * 2, WORD);
+				/* Hack: HPuTTY
+				 * unicode font fallback
+				 */
+				DWORD *indicies = snewn(len, DWORD);
 				GetGlyphIndicesW(hdc, wbuf, len, indicies, GGI_MARK_NONEXISTING_GLYPHS);
 
 				BOOL useFontFallback = FALSE;
