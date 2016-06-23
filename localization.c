@@ -500,7 +500,7 @@ const wchar_t* get_localization_text(const char* text)
 		return 0;
 	}
 
-	if (conf_get_int(conf, CONF_localization_ui) == 0)
+	if (conf == NULL || conf_get_int(conf, CONF_localization_ui) == 0)
 	{
 		return 0;
 	}
