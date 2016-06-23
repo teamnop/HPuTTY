@@ -427,7 +427,7 @@ static int CALLBACK GenericMainDlgProc(HWND hwnd, UINT msg,
 	    r.top = 3;
 	    r.bottom = r.top + 10;
 	    MapDialogRect(hwnd, &r);
-	    tvstatic = CreateWindowEx(0, "STATIC", "Cate&gory:",
+	    tvstatic = CreateWindowExAL(0, "STATIC", "Cate&gory:",
 				      WS_CHILD | WS_VISIBLE,
 				      r.left, r.top,
 				      r.right - r.left, r.bottom - r.top,
