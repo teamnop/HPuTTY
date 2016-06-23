@@ -614,3 +614,17 @@ BOOL WINAPI SetDlgItemTextAL(_In_ HWND hDlg, _In_ int nIDDlgItem, _In_ LPCSTR lp
 		return SetDlgItemTextA(hDlg, nIDDlgItem, lpString);
 	}
 }
+
+BOOL APIENTRY GetTextExtentPoint32AL(_In_ HDC hdc, _In_reads_(c) LPCSTR lpString, _In_ int c, _Out_ LPSIZE psizl)
+{
+	wchar_t* localization = get_localization_text(lpString);
+
+	if (localization != NULL)
+	{
+		return GetTextExtentPoint32W(hdc, localization, wcslen(localization), psizl);
+	}
+	else
+	{
+		return GetTextExtentPoint32A(hdc, lpString, c, psizl);
+	}
+}
