@@ -4559,7 +4559,7 @@ void do_text_internal(Context ctx, int x, int y, wchar_t *text, int len,
             for (i = 0; i < len; i++)
                 wbuf[i] = text[i];
 
-			/* IPUTTY PATCH: non-Wlatin font replacing... */
+			/* IPUTTY PATCH: non-latin font replacing... */
 			if (conf_get_int(conf, CONF_use_font_unicode)) {
 				
 				SelectObject(hdc, fonts[FONT_UNICODE]);
