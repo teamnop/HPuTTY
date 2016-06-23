@@ -15,6 +15,7 @@ struct localization_table
 
 struct localization_table table[] = {
 	{ "", L"" },
+	{ "Cate&gory:", L"분류(&G):"},
 	{ "&Open", L"접속(&O)" },
 	{ "&Cancel", L"취소(&C)" },
 	{ "About", L"정보" },
