@@ -15,3 +15,4 @@ HWND WINAPI CreateWindowExAL(_In_ DWORD dwExStyle,
 
 BOOL WINAPI TextOutAL(_In_ HDC hdc, _In_ int x, _In_ int y, _In_reads_(c) LPCSTR lpString, _In_ int c);
 BOOL WINAPI SetDlgItemTextAL(_In_ HWND hDlg,	_In_ int nIDDlgItem, _In_ LPCSTR lpString);
+BOOL APIENTRY GetTextExtentPoint32AL(_In_ HDC hdc, _In_reads_(c) LPCSTR lpString, _In_ int c, _Out_ LPSIZE psizl);

@@ -1790,7 +1790,7 @@ int winctrl_handle_command(struct dlgparam *dp, UINT msg,
 
 	SetMapMode(hdc, MM_TEXT);      /* ensure logical units == pixels */
 
-	GetTextExtentPoint32(hdc, (char *)c->data,
+	GetTextExtentPoint32AL(hdc, (char *)c->data,
 				 strlen((char *)c->data), &s);
 	DrawEdge(hdc, &r, EDGE_ETCHED, BF_ADJUST | BF_RECT);
 	TextOutAL(hdc,
