@@ -1070,9 +1070,6 @@ if (defined $makefiles{'vstudio10'} || defined $makefiles{'vstudio12'} || define
         %resource_files = ();
         %icon_files = ();
 
-		# add HPuTTY libs
-		$lib_files{"usp10.lib"} = 1;
-		
         @object_files = split " ", &objects($progname, "X.obj", "X.res", "X.lib");
         foreach $object_file (@object_files) {
             next if defined $seen_objects{$object_file};
