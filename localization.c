@@ -630,3 +630,17 @@ BOOL APIENTRY GetTextExtentPoint32AL(_In_ HDC hdc, _In_reads_(c) LPCSTR lpString
 		return GetTextExtentPoint32A(hdc, lpString, c, psizl);
 	}
 }
+
+BOOL WINAPI AppendMenuAL(_In_ HMENU hMenu, _In_ UINT uFlags, _In_ UINT_PTR uIDNewItem, _In_opt_ LPCSTR lpNewItem)
+{
+	wchar_t* localization = get_localization_text(lpNewItem);
+
+	if (localization != NULL)
+	{
+		return AppendMenuW(hMenu, uFlags, uIDNewItem, localization);
+	}
+	else
+	{
+		return AppendMenuA(hMenu, uFlags, uIDNewItem, lpNewItem);
+	}
+}

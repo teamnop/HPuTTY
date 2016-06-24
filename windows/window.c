@@ -35,6 +35,8 @@
 #include <usp10.h>
 #include <wingdi.h>
 
+#include "localization.h"
+
 /* From MSDN: In the WM_SYSCOMMAND message, the four low-order bits of
  * wParam are used by Windows, and should be masked off, so we shouldn't
  * attempt to store information in them. Hence all these identifiers have
@@ -1002,25 +1004,25 @@ int putty_main(HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 	    m = popup_menus[j].menu;
 
 	    AppendMenu(m, MF_SEPARATOR, 0, 0);
-	    AppendMenu(m, MF_ENABLED, IDM_SHOWLOG, "&Event Log");
+	    AppendMenuAL(m, MF_ENABLED, IDM_SHOWLOG, "&Event Log");
 	    AppendMenu(m, MF_SEPARATOR, 0, 0);
-	    AppendMenu(m, MF_ENABLED, IDM_NEWSESS, "Ne&w Session...");
-	    AppendMenu(m, MF_ENABLED, IDM_DUPSESS, "&Duplicate Session");
-	    AppendMenu(m, MF_POPUP | MF_ENABLED, (UINT) savedsess_menu,
+	    AppendMenuAL(m, MF_ENABLED, IDM_NEWSESS, "Ne&w Session...");
+	    AppendMenuAL(m, MF_ENABLED, IDM_DUPSESS, "&Duplicate Session");
+	    AppendMenuAL(m, MF_POPUP | MF_ENABLED, (UINT) savedsess_menu,
 		       "Sa&ved Sessions");
-	    AppendMenu(m, MF_ENABLED, IDM_RECONF, "Chan&ge Settings...");
+	    AppendMenuAL(m, MF_ENABLED, IDM_RECONF, "Chan&ge Settings...");
 	    AppendMenu(m, MF_SEPARATOR, 0, 0);
-		AppendMenu(m, MF_ENABLED | (strncmp(conf_get_str(conf, CONF_line_codepage), "UTF-8", 6) ? 0 : MF_CHECKED), IDM_UNICODE, "&Unicode Mode");
+		AppendMenuAL(m, MF_ENABLED | (strncmp(conf_get_str(conf, CONF_line_codepage), "UTF-8", 6) ? 0 : MF_CHECKED), IDM_UNICODE, "&Unicode Mode");
 	    AppendMenu(m, MF_SEPARATOR, 0, 0);
-	    AppendMenu(m, MF_ENABLED, IDM_COPYALL, "C&opy All to Clipboard");
-	    AppendMenu(m, MF_ENABLED, IDM_CLRSB, "C&lear Scrollback");
-	    AppendMenu(m, MF_ENABLED, IDM_RESET, "Rese&t Terminal");
+	    AppendMenuAL(m, MF_ENABLED, IDM_COPYALL, "C&opy All to Clipboard");
+	    AppendMenuAL(m, MF_ENABLED, IDM_CLRSB, "C&lear Scrollback");
+	    AppendMenuAL(m, MF_ENABLED, IDM_RESET, "Rese&t Terminal");
 	    AppendMenu(m, MF_SEPARATOR, 0, 0);
-	    AppendMenu(m, (conf_get_int(conf, CONF_resize_action)
+	    AppendMenuAL(m, (conf_get_int(conf, CONF_resize_action)
 			   == RESIZE_DISABLED) ? MF_GRAYED : MF_ENABLED,
 		       IDM_FULLSCREEN, "&Full Screen");
 
-            AppendMenu(m, MF_POPUP | MF_ENABLED, (UINT) url_menu, "&Urls");
+            AppendMenuAL(m, MF_POPUP | MF_ENABLED, (UINT) url_menu, "&Urls");
 
             if (conf_get_int(conf, CONF_alwaysontop)) {
                 AppendMenu(m, MF_ENABLED | MF_CHECKED, IDM_VISIBLE, "Alwa&ys on top");
@@ -1028,13 +1030,13 @@ int putty_main(HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
                 AppendMenu(m, MF_ENABLED | MF_UNCHECKED, IDM_VISIBLE, "Alwa&ys on top");
             }
 
-		AppendMenu(m, MF_ENABLED, IDM_NEXTWINDOW, "Next &Window\tCtrl+Tab");
+		AppendMenuAL(m, MF_ENABLED, IDM_NEXTWINDOW, "Next &Window\tCtrl+Tab");
 
 	    AppendMenu(m, MF_SEPARATOR, 0, 0);
 	    if (has_help())
-		AppendMenu(m, MF_ENABLED, IDM_HELP, "&Help");
+		AppendMenuAL(m, MF_ENABLED, IDM_HELP, "&Help");
 	    str = dupprintf("&About %s", appname);
-	    AppendMenu(m, MF_ENABLED, IDM_ABOUT, str);
+	    AppendMenuAL(m, MF_ENABLED, IDM_ABOUT, str);
 	    sfree(str);
 	}
     }
@@ -1264,7 +1266,7 @@ static void update_savedsess_menu(void)
 		   IDM_SAVED_MIN + (i-1)*MENU_SAVED_STEP,
 		   sesslist.sessions[i]);
     if (sesslist.nsessions <= 1)
-	AppendMenu(savedsess_menu, MF_GRAYED, IDM_SAVED_MIN, "(No sessions)");
+	AppendMenuAL(savedsess_menu, MF_GRAYED, IDM_SAVED_MIN, "(No sessions)");
 }
 
 void append_url_to_menu(Terminal *term, void *menu, wchar_t * data, int *attr, int len, int must_deselect) {
