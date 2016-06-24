@@ -492,7 +492,18 @@ struct localization_table table[] = {
 	{ "&Use Cygwin64", L"&Use Cygwin64" },
 	{ "Configure Cygwin paths", L"Configure Cygwin paths" },
 	{ "Options controlling Cygterm sessions", L"Options controlling Cygterm sessions" },
-
+	{ "&Event Log", L"&Event Log" },
+	{ "Ne&w Session...", L"Ne&w Session..." },
+	{ "&Duplicate Session", L"&Duplicate Session" },
+	{ "Sa&ved Sessions", L"Sa&ved Sessions" },
+	{ "Chan&ge Settings...", L"Chan&ge Settings..." },
+	{ "&Unicode Mode", L"&Unicode Mode" },
+	{ "C&opy All to Clipboard", L"C&opy All to Clipboard" },
+	{ "C&lear Scrollback", L"C&lear Scrollback" },
+	{ "Rese&t Terminal", L"Rese&t Terminal" },
+	{ "&Full Screen", L"&Full Screen" },
+	{ "&Urls", L"&Urls" },
+	{ "Next &Window\tCtrl + Tab", L"Next &Window\tCtrl+Tab" }
 };
 
 const wchar_t* get_localization_text(const char* text)
