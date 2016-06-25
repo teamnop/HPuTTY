@@ -1025,9 +1025,9 @@ int putty_main(HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
             AppendMenuAL(m, MF_POPUP | MF_ENABLED, (UINT) url_menu, "&Urls");
 
             if (conf_get_int(conf, CONF_alwaysontop)) {
-                AppendMenu(m, MF_ENABLED | MF_CHECKED, IDM_VISIBLE, "Alwa&ys on top");
+                AppendMenuAL(m, MF_ENABLED | MF_CHECKED, IDM_VISIBLE, "Alwa&ys on top");
             } else {
-                AppendMenu(m, MF_ENABLED | MF_UNCHECKED, IDM_VISIBLE, "Alwa&ys on top");
+                AppendMenuAL(m, MF_ENABLED | MF_UNCHECKED, IDM_VISIBLE, "Alwa&ys on top");
             }
 
 		AppendMenuAL(m, MF_ENABLED, IDM_NEXTWINDOW, "Next &Window\tCtrl+Tab");
