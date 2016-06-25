@@ -18,6 +18,9 @@ struct localization_table
 
 struct localization_table table[] = {
 	{ "", L"" },
+	{ "PuTTY Configuration", L"PuTTY 설정" },
+	{ "PuTTY Event Log", L"PuTTY 이벤트 로그" },
+	{ "PuTTY Licence", L"PuTTY 라이선스" },
 	{ "Cate&gory:", L"분류(&G):" },
 	{ "&Open", L"접속(&O)" },
 	{ "&Apply", L"적용(&A)" },
