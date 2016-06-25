@@ -4,6 +4,9 @@
 
 #include "localization.h"
 
+#include "win_res.h"
+#include "win_res_localization.h"
+
 extern Conf *conf;
 
 struct localization_table
@@ -534,6 +537,23 @@ const wchar_t* get_localization_text(const char* text)
 	return 0;
 }
 
+int get_localization_resource(int resource_id)
+{
+
+	switch (resource_id)
+	{
+	case IDD_ABOUTBOX:
+		return IDD_ABOUTBOXL;
+	case IDD_MAINBOX:
+		return IDD_MAINBOXL;
+	case IDD_LOGBOX:
+		return IDD_LOGBOXL;
+	case IDD_LICENCEBOX:
+		return IDD_LICENCEBOXL;
+	}
+	return 0;
+}
+
 HWND WINAPI CreateWindowExAL(_In_ DWORD dwExStyle,
 	_In_opt_ LPCSTR lpClassName,
 	_In_opt_ LPCSTR lpWindowName,
@@ -655,5 +675,52 @@ BOOL WINAPI AppendMenuAL(_In_ HMENU hMenu, _In_ UINT uFlags, _In_ UINT_PTR uIDNe
 	else
 	{
 		return AppendMenuA(hMenu, uFlags, uIDNewItem, lpNewItem);
+	}
+}
+
+HWND WINAPI CreateDialogParamAL(_In_opt_ HINSTANCE hInstance, _In_ LPCSTR lpTemplateName, _In_opt_ HWND hWndParent, _In_opt_ DLGPROC lpDialogFunc, _In_ LPARAM dwInitParam)
+{
+	wchar_t* localization = NULL;
+
+	localization = (wchar_t*)get_localization_resource((int)lpTemplateName);
+
+	if (localization != NULL)
+	{
+		return CreateDialogParamW(hInstance, localization, hWndParent, lpDialogFunc, dwInitParam);
+	}
+	else
+	{
+		return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+	}
+}
+
+INT_PTR WINAPI DialogBoxParamAL(_In_opt_ HINSTANCE hInstance, _In_ LPCSTR lpTemplateName, _In_opt_ HWND hWndParent, _In_opt_ DLGPROC lpDialogFunc, _In_ LPARAM dwInitParam)
+{
+	wchar_t* localization = NULL;
+
+	localization = (wchar_t*)get_localization_resource((int)lpTemplateName);
+
+	if (localization != NULL)
+	{
+		return DialogBoxParamW(hInstance, localization, hWndParent, lpDialogFunc, dwInitParam);
+	}
+	else
+	{
+		return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+	}
+}
+
+
+BOOL WINAPI SetWindowTextAL(_In_ HWND hWnd, _In_opt_ LPCSTR lpString)
+{
+	wchar_t* localization = get_localization_text(lpString);
+
+	if (localization != NULL)
+	{
+		return SetWindowTextW(hWnd, localization);
+	}
+	else
+	{
+		return SetWindowTextA(hWnd, lpString);
 	}
 }

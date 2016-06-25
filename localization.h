@@ -17,3 +17,13 @@ BOOL WINAPI TextOutAL(_In_ HDC hdc, _In_ int x, _In_ int y, _In_reads_(c) LPCSTR
 BOOL WINAPI SetDlgItemTextAL(_In_ HWND hDlg,	_In_ int nIDDlgItem, _In_ LPCSTR lpString);
 BOOL APIENTRY GetTextExtentPoint32AL(_In_ HDC hdc, _In_reads_(c) LPCSTR lpString, _In_ int c, _Out_ LPSIZE psizl);
 BOOL WINAPI AppendMenuAL(_In_ HMENU hMenu, _In_ UINT uFlags, _In_ UINT_PTR uIDNewItem, _In_opt_ LPCSTR lpNewItem);
+HWND WINAPI CreateDialogParamAL(_In_opt_ HINSTANCE hInstance, _In_ LPCSTR lpTemplateName, _In_opt_ HWND hWndParent, _In_opt_ DLGPROC lpDialogFunc, _In_ LPARAM dwInitParam);
+INT_PTR WINAPI DialogBoxParamAL(_In_opt_ HINSTANCE hInstance, _In_ LPCSTR lpTemplateName, _In_opt_ HWND hWndParent, _In_opt_ DLGPROC lpDialogFunc, _In_ LPARAM dwInitParam);
+
+#define CreateDialogAL(hInstance, lpName, hWndParent, lpDialogFunc) \
+CreateDialogParamAL(hInstance, lpName, hWndParent, lpDialogFunc, 0L)
+
+#define DialogBoxAL(hInstance, lpTemplate, hWndParent, lpDialogFunc) \
+DialogBoxParamAL(hInstance, lpTemplate, hWndParent, lpDialogFunc, 0L)
+
+BOOL WINAPI SetWindowTextAL(_In_ HWND hWnd,_In_opt_ LPCSTR lpString);
