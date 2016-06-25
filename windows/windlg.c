@@ -83,7 +83,7 @@ static int CALLBACK LogProc(HWND hwnd, UINT msg,
       case WM_INITDIALOG:
 	{
 	    char *str = dupprintf("%s Event Log", appname);
-	    SetWindowText(hwnd, str);
+	    SetWindowTextAL(hwnd, str);
 	    sfree(str);
 	}
 	{
@@ -176,7 +176,7 @@ static int CALLBACK LicenceProc(HWND hwnd, UINT msg,
       case WM_INITDIALOG:
 	{
 	    char *str = dupprintf("%s Licence", appname);
-	    SetWindowText(hwnd, str);
+	    SetWindowTextAL(hwnd, str);
 	    sfree(str);
             SetDlgItemText(hwnd, IDA_TEXT, LICENCE_TEXT("\r\n\r\n"));
 	}
@@ -223,7 +223,7 @@ static int CALLBACK AboutProc(HWND hwnd, UINT msg,
 	    return 0;
 	  case IDA_LICENCE:
 	    EnableWindow(hwnd, 0);
-	    DialogBox(hinst, MAKEINTRESOURCE(IDD_LICENCEBOX),
+	    DialogBoxAL(hinst, MAKEINTRESOURCE(IDD_LICENCEBOX),
 		      hwnd, LicenceProc);
 	    EnableWindow(hwnd, 1);
 	    SetActiveWindow(hwnd);
@@ -272,7 +272,7 @@ static int SaneDialogBox(HINSTANCE hinst,
     wc.lpszClassName = "PuTTYConfigBox";
     RegisterClassEx(&wc);
 
-    hwnd = CreateDialog(hinst, tmpl, hwndparent, lpDialogFunc);
+    hwnd = CreateDialogAL(hinst, tmpl, hwndparent, lpDialogFunc);
 
     SetWindowLongPtr(hwnd, BOXFLAGS, 0); /* flags */
     SetWindowLongPtr(hwnd, BOXRESULT, 0); /* result from SaneEndDialog */
@@ -397,7 +397,7 @@ static int CALLBACK GenericMainDlgProc(HWND hwnd, UINT msg,
       case WM_INITDIALOG:
 	dp.hwnd = hwnd;
 	create_controls(hwnd, "");     /* Open and Cancel buttons etc */
-	SetWindowText(hwnd, dp.wintitle);
+	SetWindowTextAL(hwnd, dp.wintitle);
 	SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
         if (has_help())
             SetWindowLongPtr(hwnd, GWL_EXSTYLE,
@@ -576,7 +576,7 @@ static int CALLBACK GenericMainDlgProc(HWND hwnd, UINT msg,
 	break;
       case WM_NOTIFY:
 	if (LOWORD(wParam) == IDCX_TREEVIEW &&
-	    ((LPNMHDR) lParam)->code == TVN_SELCHANGED) {
+	    ((LPNMHDR) lParam)->code == TVN_SELCHANGEDA || ((LPNMHDR)lParam)->code == TVN_SELCHANGEDW) {
             /*
              * Selection-change events on the treeview cause us to do
              * a flurry of control deletion and creation - but only
@@ -665,7 +665,7 @@ static int CALLBACK GenericMainDlgProc(HWND hwnd, UINT msg,
 void modal_about_box(HWND hwnd)
 {
     EnableWindow(hwnd, 0);
-    DialogBox(hinst, MAKEINTRESOURCE(IDD_ABOUTBOX), hwnd, AboutProc);
+    DialogBoxAL(hinst, MAKEINTRESOURCE(IDD_ABOUTBOX), hwnd, AboutProc);
     EnableWindow(hwnd, 1);
     SetActiveWindow(hwnd);
 }
@@ -684,7 +684,7 @@ void defuse_showwindow(void)
      */
     {
 	HWND hwnd;
-	hwnd = CreateDialog(hinst, MAKEINTRESOURCE(IDD_ABOUTBOX),
+	hwnd = CreateDialogAL(hinst, MAKEINTRESOURCE(IDD_ABOUTBOX),
 			    NULL, NullDlgProc);
 	ShowWindow(hwnd, SW_HIDE);
 	SetActiveWindow(hwnd);
@@ -791,7 +791,7 @@ void logevent(void *frontend, const char *string)
 void showeventlog(HWND hwnd)
 {
     if (!logbox) {
-	logbox = CreateDialog(hinst, MAKEINTRESOURCE(IDD_LOGBOX),
+	logbox = CreateDialogAL(hinst, MAKEINTRESOURCE(IDD_LOGBOX),
 			      hwnd, LogProc);
 	ShowWindow(logbox, SW_SHOWNORMAL);
     }
@@ -800,7 +800,7 @@ void showeventlog(HWND hwnd)
 
 void showabout(HWND hwnd)
 {
-    DialogBox(hinst, MAKEINTRESOURCE(IDD_ABOUTBOX), hwnd, AboutProc);
+    DialogBoxAL(hinst, MAKEINTRESOURCE(IDD_ABOUTBOX), hwnd, AboutProc);
 }
 
 int verify_ssh_host_key(void *frontend, char *host, int port, char *keytype,
