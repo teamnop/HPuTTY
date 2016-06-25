@@ -4,6 +4,7 @@
 #define APPDESC "SSH, Telnet and Rlogin client"
 
 #include "win_res.rc2"
+#include "win_res_localization.rc2"
 #include "puttygen.rc"
 #include "pageant.rc"
 
