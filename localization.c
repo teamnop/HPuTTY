@@ -503,7 +503,9 @@ struct localization_table table[] = {
 	{ "Rese&t Terminal", L"터미널 초기화(&T)" },
 	{ "&Full Screen", L"전체화면(&F)" },
 	{ "&Urls", L"&Urls" },
-	{ "Next &Window\tCtrl + Tab", L"다음 창(&W)\tCtrl+Tab" }
+	{ "Next &Window\tCtrl+Tab", L"다음 창(&W)\tCtrl+Tab" },
+	{ "Alwa&ys on top", L"항상 창을 맨위에(&Y)" },
+	{ "&About PuTTY", L"PuTTY 정보(&A)" }
 };
 
 const wchar_t* get_localization_text(const char* text)
