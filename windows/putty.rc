@@ -17,9 +17,5 @@
 #define APP_MANIFEST 1
 #endif
 
-#ifndef _WIN64
 APP_MANIFEST RT_MANIFEST "putty.mft"
-#else
-APP_MANIFEST RT_MANIFEST "putty64.mft"
-#endif
 #endif /* NO_MANIFESTS */
