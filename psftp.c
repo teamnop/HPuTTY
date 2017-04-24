@@ -2926,6 +2926,8 @@ static void usage(void)
     printf("  -sshlog file\n");
     printf("  -sshrawlog file\n");
     printf("            log protocol details to a file\n");
+    printf("  -utf8 [on|off]\n");
+    printf("            utf8 mode swtich. default is on\n");
     cleanup_exit(1);
 }
 
@@ -3194,6 +3196,16 @@ int psftp_main(int argc, char *argv[])
         } else if (strcmp(argv[i], "-pgpfp") == 0) {
             pgp_fingerprints();
             return 1;
+	} else if (strcmp(argv[i], "-utf8") == 0) {
+	    char *uopt = argv[++i];
+
+	    if ( strcmp(uopt, "on") == 0 ||
+		 strcmp(uopt, "oN") == 0 ||
+		 strcmp(uopt, "On") == 0 ||
+		 strcmp(uopt, "ON") == 0 ) {
+		isUTF8 = 1;
+	    } else
+		isUTF8 = 0;
 	} else if (strcmp(argv[i], "-V") == 0 ||
                    strcmp(argv[i], "--version") == 0) {
 	    version();
@@ -3227,7 +3239,10 @@ int psftp_main(int argc, char *argv[])
     }
 
 #if defined(_WIN)
-    printf("psftp: If charset of server side is not UTF8, then use command 'utf8 off'\n");
+    if ( isUTF8 )
+	printf("psftp: If charset of server side is not UTF8, then use command 'utf8 off'\n");
+    else
+	printf("psftp: If charset of server side is UTF8, then use command 'utf8 on'\n");
 #endif
 
     /*
@@ -3263,3 +3278,6 @@ int psftp_main(int argc, char *argv[])
 
     return ret;
 }
+
+
+// vim: ts=8 sts=4 sw=4 noet cino=\=2\:2(0u0
