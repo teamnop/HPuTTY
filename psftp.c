@@ -28,7 +28,7 @@ const char *const appname = "PSFTP";
 char isUTF8 = 1;
 
 char *toCP949 (char *utf8str) {
-    BSTR unicode;
+    BSTR unicode, unicode_norm;
     char *ansi;
     int len;
 
@@ -40,6 +40,18 @@ char *toCP949 (char *utf8str) {
 	return dupstr(utf8str);
     unicode = SysAllocStringLen(NULL, len);
     MultiByteToWideChar(CP_UTF8, 0, utf8str, lstrlen(utf8str) + 1, unicode, len);
+    int n = NormalizeString(NormalizationC, unicode, -1, NULL, 0);
+    for (int i = 0; i < 10; i++) {
+        if (unicode_norm != NULL) SysFreeString(unicode_norm);
+        unicode_norm = SysAllocStringLen(0, n);
+        n = NormalizeString(NormalizationC, unicode, -1, unicode_norm, n);
+        if (n > 0) break;
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) break;
+        n = -n;
+    }
+    SysFreeString(unicode);
+    unicode = unicode_norm;
+    unicode_norm = 0;
 
     len = WideCharToMultiByte(CP_ACP, 0, unicode, -1, NULL, 0, NULL, NULL);
     if (len < 1) {
