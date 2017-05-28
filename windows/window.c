@@ -4668,6 +4668,18 @@ void do_text_internal(Context ctx, int x, int y, wchar_t *text, int len,
 void do_text(Context ctx, int x, int y, wchar_t *text, int len,
 	     unsigned long attr, int lattr)
 {
+    BSTR unicode = NULL;
+    int n = NormalizeString(NormalizationC, text, len, NULL, 0);
+    for (int i = 0; i < 10; i++) {
+        if (unicode != NULL) SysFreeString(unicode);
+        unicode = SysAllocStringLen(0, n);
+        n = NormalizeString(NormalizationC, text, len, unicode, n);
+        if (n > 0) break;
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) break;
+        n = -n;
+    }
+    text = unicode;
+    len = n;
     if (attr & TATTR_COMBINING) {
 	unsigned long a = 0;
 	int len0 = 1;
@@ -4704,6 +4716,7 @@ void do_text(Context ctx, int x, int y, wchar_t *text, int len,
 	}
     } else
 	do_text_internal(ctx, x, y, text, len, attr, lattr);
+	SysFreeString(unicode);
 }
 
 void do_cursor(Context ctx, int x, int y, wchar_t *text, int len,
@@ -6033,6 +6046,16 @@ void write_clip(Terminal *term, void *frontend, wchar_t * data, int *attr, int l
     char *urldata;  /* url-cut */
 
     len2 = WideCharToMultiByte(CP_ACP, 0, data, len, 0, 0, NULL, NULL);
+    BSTR unicode = NULL;
+    int n = NormalizeString(NormalizationC, data, len, NULL, 0);
+    for (int i = 0; i < 10; i++) {
+        if (unicode != NULL) SysFreeString(unicode);
+        unicode = SysAllocStringLen(0, n);
+        n = NormalizeString(NormalizationC, data, len, unicode, n);
+        if (n > 0) break;
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) break;
+        n = -n;
+    }
 
     clipdata = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE,
 			   len * sizeof(wchar_t));
@@ -6043,22 +6066,26 @@ void write_clip(Terminal *term, void *frontend, wchar_t * data, int *attr, int l
 	    GlobalFree(clipdata);
 	if (clipdata2)
 	    GlobalFree(clipdata2);
+	SysFreeString(unicode);
 	return;
     }
     if (!(lock = GlobalLock(clipdata))) {
         GlobalFree(clipdata);
         GlobalFree(clipdata2);
+        SysFreeString(unicode);
 	return;
     }
     if (!(lock2 = GlobalLock(clipdata2))) {
         GlobalUnlock(clipdata);
         GlobalFree(clipdata);
         GlobalFree(clipdata2);
+        SysFreeString(unicode);
 	return;
     }
 
-    memcpy(lock, data, len * sizeof(wchar_t));
-    WideCharToMultiByte(CP_ACP, 0, data, len, lock2, len2, NULL, NULL);
+    memcpy(lock, unicode, n * sizeof(wchar_t));
+    WideCharToMultiByte(CP_ACP, 0, unicode, n, lock2, len2, NULL, NULL);
+    SysFreeString(unicode);
 
     /* url-cut */
     if (conf_get_int(conf, CONF_copy_clipbd_url_reg))
